@@ -1,0 +1,1482 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>わんわんコールセンター（デモ版）</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;background:#eef3f8;color:#2f3440}
+#app{display:flex;flex-direction:column;height:100%}
+#stage{position:relative;height:44vh;min-height:260px;flex:none;background:#dfe9f2}
+#c{display:block;width:100%;height:100%}
+#top{position:absolute;left:8px;right:8px;top:8px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.pill{background:rgba(255,255,255,.88);border-radius:999px;padding:5px 10px;font-size:13px;font-weight:800;box-shadow:0 1px 6px rgba(0,0,0,.08)}
+#top .sp{flex:1}
+#top button{border:0;background:rgba(255,255,255,.9);border-radius:999px;padding:6px 10px;font:inherit;font-size:13px;font-weight:800;box-shadow:0 1px 6px rgba(0,0,0,.08)}
+#queue{position:absolute;left:8px;bottom:8px;display:flex;gap:6px;flex-direction:column;align-items:flex-start}
+.qd{background:rgba(255,255,255,.88);border-radius:10px;padding:4px 8px;font-size:11px;font-weight:700;min-width:120px}
+.qd .pb{height:5px;background:#e3e7ee;border-radius:3px;margin-top:3px;overflow:hidden}
+.qd .pb i{display:block;height:100%;background:#5cc48a}
+#caption{position:absolute;right:8px;bottom:8px;background:rgba(40,46,60,.85);color:#fff;border-radius:10px;padding:4px 9px;font-size:12px;font-weight:700}
+#panel{flex:1;overflow-y:auto;padding:12px 12px 30px;background:#fbfcfe;border-top:1px solid #dfe5ee}
+h1{font-size:22px;margin:4px 0 6px}
+.lead{font-size:13px;color:#6a7385;line-height:1.6;margin:0 0 12px}
+.big{display:block;width:100%;border:0;border-radius:16px;padding:15px;font:inherit;font-size:17px;font-weight:800;color:#fff;background:#ff8a3d;box-shadow:0 4px 0 #d86a22;margin:8px 0}
+.big.sub{background:#e8edf5;color:#3b4456;box-shadow:0 4px 0 #c9d2e0}
+.big.green{background:#3fbf7f;box-shadow:0 4px 0 #2a9a62}
+.ring{animation:ring .5s infinite alternate}
+@keyframes ring{from{transform:rotate(-2deg)}to{transform:rotate(2deg) scale(1.02)}}
+.incoming{background:#fff;border:2px solid #ffd2b3;border-radius:18px;padding:14px;text-align:center}
+.incoming .ic{font-size:40px}
+.incoming b{font-size:18px}
+.callhead{display:flex;align-items:center;gap:8px;font-size:15px}
+.callhead b{flex:1}
+.timer{font-variant-numeric:tabular-nums;font-weight:800;color:#6a7385}
+.emo{display:flex;align-items:center;gap:8px;margin:6px 0 10px}
+.emo .face{font-size:24px}
+.emo .bar{flex:1;height:12px;background:#e6eaf1;border-radius:6px;overflow:hidden}
+.emo .bar i{display:block;height:100%;width:40%;background:#f0b13e;transition:width .6s,background .6s}
+.emo .num{font-size:12px;font-weight:800;color:#6a7385;width:58px;text-align:right}
+#log{display:flex;flex-direction:column;gap:8px}
+.bub{max-width:88%;padding:9px 12px;border-radius:16px;font-size:14px;line-height:1.55}
+.bub.dog{align-self:flex-start;background:#fff4e6;border:1.5px solid #ffd9ad;border-bottom-left-radius:4px}
+.bub.op{align-self:flex-end;background:#e3f0ff;border:1.5px solid #bcd9ff;border-bottom-right-radius:4px}
+.bub.sys{align-self:center;background:#eef1f6;color:#6a7385;font-size:12px;border-radius:999px;padding:5px 12px}
+.bub .nm{font-size:11px;font-weight:800;color:#b07a3a;margin-bottom:2px}
+.bub .bark{font-size:12px;color:#a08868;font-style:italic}
+.hint{font-size:12px;color:#5b7bb5;background:#eef4ff;border-radius:10px;padding:6px 10px;margin:10px 0 0}
+#acts{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.act{border:0;border-radius:14px;padding:12px 14px;font:inherit;font-size:14px;font-weight:700;text-align:left;background:#fff;border:1.5px solid #d6deea;color:#2f3440}
+.act.tool{background:#fff7ef;border-color:#ffd2b3}
+.acts-tools{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#modal{position:fixed;inset:0;background:rgba(30,36,48,.45);display:none;align-items:flex-end;justify-content:center;z-index:20}
+#modal.on{display:flex}
+.mcard{background:#fff;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;border-radius:22px 22px 0 0;padding:16px 16px 26px;animation:up .25s}
+@keyframes up{from{transform:translateY(40px);opacity:0}}
+.mcard h2{font-size:18px;margin:0 0 8px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.gbtn{border:1.5px solid #d6deea;background:#fff;border-radius:14px;padding:10px 4px;font:inherit;font-size:12px;font-weight:700;text-align:center}
+.gbtn .e{font-size:28px;display:block}
+.gbtn.ok{background:#e4f8ec;border-color:#3fbf7f}.gbtn.ng{background:#ffe9e9;border-color:#ff7a7a}
+.map{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;background:#cfe6c6;padding:6px;border-radius:12px}
+.map button{aspect-ratio:1;border:0;border-radius:8px;background:#eaf5e4;font-size:22px}
+.map button.road{background:#d9d9d9}
+.map button.ok{background:#3fbf7f}.map button.ng{background:#ff9a9a}
+.hintlist{font-size:13px;line-height:1.7;background:#fff8ec;border-radius:10px;padding:8px 10px;margin:0 0 10px}
+.rhy{position:relative;width:220px;height:220px;margin:6px auto 10px}
+.rhy .tg,.rhy .rg{position:absolute;left:50%;top:50%;border-radius:50%;transform:translate(-50%,-50%)}
+.rhy .tg{width:110px;height:110px;background:#ffe2c6;display:flex;align-items:center;justify-content:center;font-size:44px}
+.rhy .rg{width:110px;height:110px;border:5px solid #ff8a3d}
+.fb{text-align:center;font-weight:800;min-height:22px;color:#ff8a3d}
+.staff{display:flex;gap:10px;align-items:center;border:1.5px solid #d6deea;border-radius:14px;padding:10px;margin-bottom:8px;background:#fff;width:100%;font:inherit;text-align:left}
+.staff .av{font-size:30px}
+.staff b{display:block}
+.staff span{font-size:12px;color:#6a7385}
+.seq{min-height:40px;background:#f3f6fa;border-radius:10px;padding:8px;font-size:13px;margin:8px 0;line-height:1.7}
+.stars{font-size:30px;letter-spacing:2px;text-align:center;color:#f5b301}
+.res{text-align:center;font-size:14px;line-height:1.8}
+.idea h3{font-size:14px;margin:12px 0 6px;color:#5b6475}
+.idea li{font-size:13px;line-height:1.6;margin:2px 0}
+.idea ul{padding-left:18px;margin:0}
+.tag{display:inline-block;font-size:10px;font-weight:800;border-radius:6px;padding:1px 5px;margin-right:4px}
+.tag.y{background:#dff6e8;color:#1f8a52}.tag.n{background:#fff1dc;color:#b06a00}
+.karte{display:flex;justify-content:space-between;border-bottom:1px solid #eef1f6;padding:6px 0;font-size:13px}
+
+.simon{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0}
+.simon button{height:70px;border:0;border-radius:16px;font-size:22px;font-weight:800;color:#fff;opacity:.5;transition:opacity .1s,transform .1s}
+.simon button.lit{opacity:1;transform:scale(1.05)}
+.rc{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;background:#e9e2d6;padding:6px;border-radius:12px}
+.rc div{aspect-ratio:1;border-radius:8px;background:#f8f4ee;display:flex;align-items:center;justify-content:center;font-size:22px}
+.pad{display:grid;grid-template-columns:repeat(3,64px);gap:6px;justify-content:center;margin-top:10px}
+.pad button{height:52px;border:0;border-radius:12px;background:#e8edf5;font-size:22px}
+.menu{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.menu button{border:1.5px solid #d6deea;background:#fff;border-radius:14px;padding:14px 6px;font:inherit;font-weight:800;font-size:14px}
+.stamp{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.stamp div{font-size:9px;text-align:center;border-radius:8px;padding:6px 2px;background:#f1f3f7;color:#a0a8b8;min-height:40px;display:flex;align-items:center;justify-content:center}
+.stamp div.on{background:#fff1dc;color:#7a4a10;font-weight:800}
+.shopi{display:flex;gap:10px;align-items:center;border:1.5px solid #d6deea;border-radius:14px;padding:10px;margin-bottom:8px}
+.shopi .e{font-size:28px}.shopi div{flex:1;font-size:12px;color:#6a7385}.shopi b{display:block;color:#2f3440;font-size:14px}
+.shopi button{border:0;border-radius:10px;padding:8px 10px;background:#ff8a3d;color:#fff;font:inherit;font-weight:800}
+.shopi button:disabled{background:#c9d2e0}
+.act.helpb{background:#eef4ff;border-color:#bcd2ff;text-align:center}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}.chip{border:1.5px solid #d6deea;background:#fff;border-radius:999px;padding:6px 10px;font:inherit;font-size:12px}.chip.on{background:#2f3440;color:#fff;border-color:#2f3440}
+.sw{width:28px;height:28px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px #d6deea;padding:0}.sw.on{box-shadow:0 0 0 3px #2f3440}
+.ach{display:flex;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid #eef1f6;font-size:13px}.ach.off{opacity:.4}
+@media (min-width:900px){
+  #app{flex-direction:row}
+  #stage{flex:1;height:100%}
+  #panel{flex:none;width:420px;border-top:0;border-left:1px solid #dfe5ee}
+  .mcard{border-radius:22px;margin-bottom:5vh}
+  #modal{align-items:center}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <canvas id="c"></canvas>
+    <div id="top">
+      <span class="pill" id="clock">Day1 9:00</span>
+      <span class="pill" id="coins">🦴 0</span>
+      <span class="pill" id="avg">⭐ -</span>
+      <span class="pill" id="rep">📣 50</span>
+      <span class="sp"></span>
+      <button id="bShop">🛒</button>
+      <button id="bMenu">≡</button>
+    </div>
+    <div id="queue"></div>
+    <div id="caption">待機中</div>
+  </div>
+  <div id="panel"></div>
+</div>
+<div id="modal"><div class="mcard" id="mcard"></div></div>
+
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+//#CORE-START
+/* =========================================================
+   共通ユーティリティ
+   ========================================================= */
+const VOX = 0.05;                       // 1ボクセル = 5cm
+const _e = new THREE.Euler(0,0,0,'YXZ');
+const _v = new THREE.Vector3();
+function hash3(x,y,z,s){ const h=Math.sin(x*127.1+y*311.7+z*74.7+s*19.31)*43758.5453; return h-Math.floor(h); }
+function shade(hex,a){ const c=new THREE.Color(hex); const t=a<0?new THREE.Color(0,0,0):new THREE.Color(1,1,1); c.lerp(t,Math.abs(a)); return '#'+c.getHexString(); }
+function track(rig,o,rx=0,ry=0,rz=0){
+  o.userData.re=new THREE.Euler(rx,ry,rz,'YXZ');
+  o.userData.rest=o.position.clone();
+  o.userData.tp=o.position.clone();
+  o.userData.tq=new THREE.Quaternion().setFromEuler(o.userData.re);
+  o.quaternion.copy(o.userData.tq);
+  rig.nodes.push(o); return o;
+}
+function rot(o,x=0,y=0,z=0){ const r=o.userData.re; _e.set(r.x+x,r.y+y,r.z+z,'YXZ'); o.userData.tq.setFromEuler(_e); }
+function pos(o,dx=0,dy=0,dz=0){ o.userData.tp.copy(o.userData.rest); o.userData.tp.x+=dx; o.userData.tp.y+=dy; o.userData.tp.z+=dz; }
+function resetRig(rig){ for(const o of rig.nodes){ rot(o); o.userData.tp.copy(o.userData.rest); } }
+function applyRig(rig,k){ for(const o of rig.nodes){ o.quaternion.slerp(o.userData.tq,k); o.position.lerp(o.userData.tp,k); } }
+function snapRig(rig){ for(const o of rig.nodes){ o.quaternion.copy(o.userData.tq); o.position.copy(o.userData.tp); } }
+function disposeTree(o){ o.traverse(n=>{ if(n.geometry) n.geometry.dispose(); if(n.material&&n.material.map) n.material.map.dispose(); }); }
+
+/* =========================================================
+   ボクセルメッシュ生成（隣接面カリング＋頂点カラー）
+   ========================================================= */
+const VMAT = new THREE.MeshStandardMaterial({vertexColors:true,roughness:0.85,metalness:0});
+const _col = new THREE.Color();
+function voxGeo(list){
+  const key=(x,y,z)=>x+','+y+','+z;
+  const set=new Set(list.map(v=>key(v[0],v[1],v[2])));
+  const P=[],N=[],C=[],I=[];
+  for(const [x,y,z,hex] of list){
+    _col.set(hex);
+    for(let a=0;a<3;a++) for(const s of [1,-1]){
+      const d=[0,0,0]; d[a]=s;
+      if(set.has(key(x+d[0],y+d[1],z+d[2]))) continue;
+      const b=(a+1)%3, c=(a+2)%3, base=[x,y,z];
+      const quad=[[0,0],[1,0],[1,1],[0,1]];
+      const order=s>0?[0,1,2,3]:[0,3,2,1];
+      const vi=P.length/3;
+      for(const qi of order){
+        const p=base.slice(); p[a]+= s>0?1:0; p[b]+=quad[qi][0]; p[c]+=quad[qi][1];
+        P.push(p[0],p[1],p[2]); N.push(d[0],d[1],d[2]); C.push(_col.r,_col.g,_col.b);
+      }
+      I.push(vi,vi+1,vi+2,vi,vi+2,vi+3);
+    }
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));
+  g.setAttribute('normal',new THREE.Float32BufferAttribute(N,3));
+  g.setAttribute('color',new THREE.Float32BufferAttribute(C,3));
+  g.setIndex(I); g.computeBoundingSphere();
+  return g;
+}
+function vbox(sx,sy,sz,ox,oy,oz,fn){ const L=[]; for(let x=0;x<sx;x++)for(let y=0;y<sy;y++)for(let z=0;z<sz;z++){ const c=fn(x,y,z); if(c) L.push([ox+x,oy+y,oz+z,c]); } return L; }
+function vmesh(list){ const m=new THREE.Mesh(voxGeo(list),VMAT); m.castShadow=true; m.receiveShadow=true; return m; }
+const matCache={};
+function mat(hex,opt){ const k=hex+(opt?JSON.stringify(opt):''); if(!matCache[k]) matCache[k]=new THREE.MeshStandardMaterial(Object.assign({color:hex,roughness:0.62,metalness:0},opt||{})); return matCache[k]; }
+function cube(w,h,d,hex){ const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(hex,{roughness:0.8})); m.castShadow=true; return m; }
+
+/* =========================================================
+   犬：50犬種データ
+   ========================================================= */
+const WH='#efe9e0', BK='#2a2522';
+const DOGDEF={bw:4,bh:4,bl:7,L:4,lw:2,hw:5,hh:5,hd:4,sw:3,sh:2,sl:2,ear:'flop',eL:4,eW:1,eD:2,tail:'up',tl:3,tW:1,
+  c1:'#b8672e',c2:WH,c3:'#7a3d1a',pat:'solid',head:'solid',nose:'#1d1a19',eye:'#1a1614',socks:0,s:1,eS:1,seed:1};
+const SHIBA={c1:'#d8843c',c2:'#f3e2c4',pat:'bicolor',head:'cheeks',ear:'prick',eL:2,eW:2,tail:'curl',tW:2,socks:1,brow:'#f3e2c4'};
+const BREEDS=[
+ ['ビーグル',{c1:'#b8672e',c3:'#7a3d1a',pat:'tricolor',head:'blaze',earC:'#8a4520',frontLegC:WH,socks:2,tailTip:WH}],
+ ['柴犬',{...SHIBA}],
+ ['黒柴',{...SHIBA,c1:'#2c2522',c2:'#f0dcc0',brow:'#d39a5c'}],
+ ['秋田犬',{c1:'#d98e48',c2:'#f6efe4',pat:'bicolor',head:'cheeks',ear:'prick',eL:2,eW:2,tail:'fluffy',tW:2,bw:5,bh:5,bl:8,L:5,hw:6,hh:6,hd:5,sw:4,s:1.15,socks:2}],
+ ['シベリアンハスキー',{c1:'#4d525b',c2:'#f4f2ee',pat:'husky',head:'mask',ear:'prick',eL:3,eW:2,tail:'feather',tW:2,tl:4,eye:'#4fa6e0',socks:2,L:5,bl:8,s:1.1,tailTip:'#f4f2ee'}],
+ ['ダルメシアン',{c1:'#f6f3ee',c3:'#222',pat:'spots',head:'spots',earC:'#2a2522',eL:3,tail:'whip',tl:5,L:6,bl:8,s:1.1}],
+ ['コーギー',{c1:'#d8853a',c2:'#f6f1ea',pat:'bicolor',head:'blaze',ear:'prick',eL:3,eW:2,tail:'stub',tl:1,L:2,bl:8,bw:5,hw:6,legC:'#f6f1ea',s:0.8}],
+ ['ゴールデンレトリバー',{c1:'#dca553',eL:3,tail:'feather',tW:2,tl:4,L:5,bl:8,sl:3,s:1.25,ruff:'#e6b768'}],
+ ['ラブラドール(黒)',{c1:'#24201e',eL:3,tail:'down',tW:2,tl:4,L:5,bl:8,sl:3,s:1.2}],
+ ['ラブラドール(イエロー)',{c1:'#e6c58f',eL:3,tail:'down',tW:2,tl:4,L:5,bl:8,sl:3,s:1.2,nose:'#3a2a22'}],
+ ['ラブラドール(チョコ)',{c1:'#6b3f24',eL:3,tail:'down',tW:2,tl:4,L:5,bl:8,sl:3,s:1.2,nose:'#3d2416'}],
+ ['スタンダードプードル',{c1:'#f5f2ec',eL:4,eW:2,tail:'pom',tl:3,L:6,bl:7,topknot:1,s:1.15,sl:3,sw:2,hw:4,hh:5}],
+ ['トイプードル',{c1:'#c5814e',eL:3,eW:2,tail:'pom',tl:2,L:3,bl:5,hw:5,topknot:1,s:0.5}],
+ ['チワワ',{c1:'#e7bd85',c2:'#f8ecd9',pat:'bicolor',ear:'prick',eL:3,eW:2,tl:3,L:3,bl:5,bw:3,bh:3,hw:5,hh:4,sl:1,sw:2,eS:1.3,s:0.45}],
+ ['ポメラニアン',{c1:'#e89a48',ear:'prick',eL:1,eW:2,tail:'fluffy',tW:2,L:2,bl:5,hw:6,sl:1,sw:2,ruff:'#f0ad5f',s:0.5}],
+ ['パグ',{c1:'#dcb886',snoutC:'#2a2522',earC:'#2a2522',eL:2,tail:'pugcurl',tW:2,bw:5,bl:6,L:3,hw:6,sw:4,sl:1,s:0.65}],
+ ['フレンチブルドッグ',{c1:'#e7d6b6',snoutC:'#463a33',ear:'bat',eL:3,eW:3,tail:'stub',tl:1,bw:5,bl:6,L:3,hw:6,sw:4,sl:1,s:0.65,eS:1.2}],
+ ['ブルドッグ',{c1:'#f3ede4',c3:'#c98b52',pat:'patches',head:'halfface',earC:'#c98b52',ear:'fold',tail:'stub',tl:1,bw:6,bl:7,L:2,hw:7,hd:5,sw:5,sl:1,s:0.9}],
+ ['ダックスフンド',{c1:'#8c4a24',eL:4,tail:'down',tl:4,L:1,bw:3,bh:3,bl:10,hw:4,hh:4,sw:2,sl:3,s:0.6}],
+ ['ミニチュアシュナウザー',{c1:'#7d7d83',snoutC:'#d4d4d8',beard:'#d4d4d8',brow:'#d4d4d8',ear:'fold',tail:'stub',tl:2,legC:'#a9a9ae',bl:6,s:0.7}],
+ ['ボーダーコリー',{c1:'#26221f',c2:'#f5f2ec',pat:'tuxedo',head:'blaze',ear:'fold',tail:'feather',tl:4,tailTip:'#f5f2ec',socks:2,ruff:'#f5f2ec',L:5,bl:8,sl:3}],
+ ['シェルティ',{c1:'#c87b38',c2:'#f6f1e8',pat:'tuxedo',head:'blaze',ruff:'#f6f1e8',ear:'fold',tail:'feather',tl:3,socks:2,sl:3,sw:2,hw:4,bl:6,s:0.75}],
+ ['ジャーマンシェパード',{c1:'#c88b47',c3:'#262220',pat:'saddle',snoutC:'#3a302a',ear:'prick',eL:4,eW:2,tail:'feather',tW:2,tl:4,L:6,bl:9,bh:5,sl:3,s:1.3}],
+ ['ドーベルマン',{c1:'#1f1b1a',c2:'#b4622c',pat:'points',brow:'#b4622c',snoutC:'#b4622c',socks:2,sockC:'#b4622c',ear:'prick',eL:4,tail:'stub',tl:1,L:7,bl:8,hw:4,hh:4,sl:3,sw:2,s:1.3}],
+ ['グレートデーン',{c1:'#c99b5e',snoutC:'#2a2522',ear:'fold',tail:'whip',tl:6,L:9,bl:9,bh:5,hh:6,hd:5,sl:3,s:1.5}],
+ ['セントバーナード',{c1:'#f6f1e8',c3:'#a3532b',pat:'patches',head:'halfface',earC:'#a3532b',eL:3,eW:2,tail:'feather',tW:2,tl:4,bw:6,bh:5,bl:9,L:5,hw:7,hh:6,hd:5,sw:5,s:1.55,ruff:'#f6f1e8'}],
+ ['バーニーズ',{c1:'#211d1b',c2:'#f6f1e8',c3:'#b05a2a',pat:'tuxedo',head:'blaze',brow:'#b05a2a',legC:'#b05a2a',socks:1,eL:3,tail:'feather',tW:2,tl:4,bw:5,bh:5,bl:8,L:5,hw:6,sw:4,s:1.4,tailTip:'#f6f1e8'}],
+ ['マルチーズ',{c1:'#fbf8f2',eL:5,eW:2,tail:'fluffy',tW:2,L:2,bl:5,sl:1,s:0.42,bow:'#ff7aa8',topknot:1}],
+ ['シーズー',{c1:'#f8f4ec',c3:'#b8884f',head:'halfface',earC:'#b8884f',eL:4,eW:2,tail:'fluffy',tW:2,pat:'patch1',L:2,bl:6,hw:6,sl:1,s:0.5,bow:'#ff5a7a',topknot:1}],
+ ['ヨークシャーテリア',{c1:'#4e5a6b',headC:'#c99151',legC:'#c99151',snoutC:'#c99151',earC:'#c99151',ear:'prick',eL:2,eW:2,tl:2,L:3,bl:5,bw:3,bh:3,hw:4,hh:4,sl:1,sw:2,s:0.4,bow:'#ff4f7a',topknot:1}],
+ ['ジャックラッセル',{c1:'#f6f2ec',c3:'#b8742f',head:'halfface',earC:'#b8742f',pat:'patch1',ear:'fold',tl:2,bl:6,s:0.7}],
+ ['ボストンテリア',{c1:'#24201e',c2:'#f6f2ec',pat:'tuxedo',head:'blaze',ear:'bat',eL:3,eW:2,tail:'stub',tl:1,sl:1,bl:6,s:0.65,socks:1}],
+ ['バセットハウンド',{c1:'#b0652d',c2:'#f4efe6',c3:'#3a2a22',pat:'tricolor',head:'blaze',eL:7,eD:3,tl:4,tailTip:'#f4efe6',L:2,bw:5,bl:10,hd:5,sl:3,frontLegC:'#f4efe6',socks:1,s:0.9}],
+ ['ボクサー',{c1:'#c37b3e',c2:'#f5f0e8',pat:'bicolor',snoutC:'#2a2522',ear:'fold',tail:'stub',tl:1,L:6,bl:8,sw:4,sl:1,s:1.25,socks:1}],
+ ['サモエド',{c1:'#faf8f4',ruff:'#ffffff',ear:'prick',eL:2,eW:2,tail:'fluffy',tW:2,L:5,bw:5,bh:5,hw:6,s:1.15,tongue:1}],
+ ['パピヨン',{c1:'#f8f4ee',c3:'#8a4220',head:'halfface',earC:'#8a4220',ear:'butterfly',eL:3,eW:3,tail:'fluffy',tW:2,pat:'patch1',L:3,bl:5,bw:3,bh:3,hw:4,hh:4,sl:1,sw:2,s:0.45}],
+ ['キャバリア',{c1:'#f7f2ea',c3:'#b9632d',head:'halfface',earC:'#b9632d',pat:'patches',eL:4,eW:2,tail:'feather',tl:3,L:3,bl:6,sl:1,s:0.6}],
+ ['狆',{c1:'#f8f5ef',c3:'#22201f',head:'halfface',earC:'#22201f',eL:3,eW:2,tail:'fluffy',tW:2,pat:'patch1',L:3,bl:5,hw:6,sl:1,sw:2,s:0.5,eS:1.2}],
+ ['甲斐犬',{c1:'#3a2f28',c3:'#7c5a3a',pat:'brindle',ear:'prick',eL:2,eW:2,tail:'curl',tW:2,s:0.95}],
+ ['紀州犬',{c1:'#f3ede2',ear:'prick',eL:2,eW:2,tail:'curl',tW:2,L:5,s:1.0}],
+ ['ウエスティ',{c1:'#fbf9f5',beard:'#ffffff',ear:'prick',eL:2,tl:2,L:2,bl:6,hw:6,sl:1,s:0.55,ruff:'#ffffff'}],
+ ['スコティッシュテリア',{c1:'#2b2827',beard:'#3b3735',brow:'#6a645e',ear:'prick',eL:2,tl:2,L:2,hw:4,hd:5,sl:3,sw:2,s:0.6}],
+ ['グレイハウンド',{c1:'#a2a3a8',ear:'fold',tail:'whip',tl:6,L:8,bw:3,bl:9,hw:4,hh:4,sw:2,sl:4,s:1.25}],
+ ['ロットワイラー',{c1:'#1f1c1b',c2:'#a9592a',pat:'points',brow:'#a9592a',snoutC:'#a9592a',socks:2,sockC:'#a9592a',ear:'fold',tail:'stub',tl:1,bw:5,bh:5,bl:8,L:5,hw:6,sw:4,s:1.4}],
+ ['ワイマラナー',{c1:'#9e9a94',eye:'#8a7a2a',eL:4,tail:'stub',tl:2,L:7,bl:8,sl:3,s:1.25,nose:'#7a6a66'}],
+ ['豆柴',{...SHIBA,c1:'#ecd3a4',c2:'#fbf3e4',brow:'#fbf3e4',s:0.6}],
+ ['ミックス(茶白)',{c1:'#b07a45',c2:'#f4efe6',pat:'bicolor',head:'blaze',ear:'fold',tl:3,socks:2,s:0.85}],
+ ['ミックス(白黒ぶち)',{c1:'#f4f1ec',c3:'#2a2522',pat:'patches',head:'halfface',earC:'#2a2522',eL:3,tail:'down',tl:3,s:0.85}],
+ ['ミニチュアピンシャー',{c1:'#241f1e',c2:'#b5652f',pat:'points',brow:'#b5652f',snoutC:'#b5652f',socks:2,sockC:'#b5652f',ear:'prick',eL:3,eW:2,tail:'stub',tl:1,bl:5,bw:3,bh:3,hw:4,hh:4,sw:2,s:0.45}],
+ ['アイリッシュセッター',{c1:'#9c3a1a',eL:4,tail:'feather',tl:4,L:6,bl:8,hw:4,hd:5,sl:3,sw:2,s:1.25}],
+];
+BREEDS.forEach((b,i)=>{ b[1].seed = i*7+3; });
+
+/* ---------- 色の決め方 ---------- */
+function bodyColor(P,x,y,z){
+  const {bw,bh,bl,c1,c2,c3}=P, front=z===bl-1, bottom=y===0, side=(x===0||x===bw-1);
+  switch(P.pat){
+    case 'bicolor': if(bottom||(front&&y<bh-1)||(z>=bl-2&&y<=1)) return c2; return c1;
+    case 'tricolor':
+      if(bottom||(z>=bl-2&&y<bh-1)) return c2;
+      if(y>=bh-2&&z>=1&&z<=bl-3&&!(y===bh-2&&(z===1||z===bl-3))) return c3;
+      if(y===bh-3&&z>=2&&z<=bl-4&&side) return c3;
+      return c1;
+    case 'spots': return hash3(x,y,z,P.seed)<0.2?c3:c1;
+    case 'husky': if(front&&y<bh-1) return c2; return y>=bh/2?c1:c2;
+    case 'saddle':
+      if(y>=bh-2&&z>0&&z<bl-1) return c3;
+      if(y===bh-3&&z>=1&&z<=bl-3&&side) return c3; return c1;
+    case 'tuxedo': if((front&&y<bh-1)||(bottom&&z>=bl/2)) return c2; return c1;
+    case 'points': if(front&&y<=1&&!side) return c2; return c1;
+    case 'brindle': return (((z*2+y+(x%2))%4===0)&&hash3(x,y,z,P.seed)>0.25)?c3:c1;
+    case 'patches': return (y>0&&hash3(Math.floor(x/2),Math.floor(y/2),Math.floor(z/2.5),P.seed)<0.35)?c3:c1;
+    case 'patch1': return (y>=bh-2&&z<=2)?c3:c1;
+  }
+  return c1;
+}
+function headColor(P,x,y,z,eyeRow,ex){
+  const {hw,hh,hd,sh,c1,c2,c3}=P, base=P.headC||c1;
+  const front=z===hd-1, top=y===hh-1, cx=x-hw/2+0.5;
+  const center=Math.abs(cx)<(hw%2?0.6:1.1);
+  const eyeCol=Math.abs(Math.abs(cx)-ex)<0.6;
+  if(P.brow&&front&&y===eyeRow+1&&eyeCol) return P.brow;
+  switch(P.head){
+    case 'blaze': if(center&&((front&&y>=sh)||(top&&z>=hd-3))) return c2; return base;
+    case 'cheeks': if(y<sh&&(front||z>=hd-3)) return c2; return base;
+    case 'mask':
+      if(top) return c1;
+      if(front){ if(y>eyeRow+1) return c1; if(center&&y>=eyeRow) return c1; return c2; }
+      return y<=sh?c2:c1;
+    case 'spots': return (!front&&hash3(x,y,z,P.seed+5)<0.16)?c3:base;
+    case 'halfface': if(center&&(front||top)) return base; if(y>=sh) return c3; return base;
+  }
+  return base;
+}
+function legColor(P,front,y,li,z){
+  const base=front?(P.frontLegC||P.legC||P.c1):(P.legC||P.c1);
+  if(P.socks&&y<P.socks) return P.sockC||P.c2;
+  if(P.pat==='spots'&&hash3(li*5,y,z,P.seed+1)<0.2) return P.c3;
+  if(P.pat==='patches'&&y>=P.L-1&&hash3(li,1,1,P.seed)<0.3) return P.c3;
+  return base;
+}
+
+/* ---------- 犬の組み立て ---------- */
+function buildDog(P0){
+  const P=Object.assign({},DOGDEF,P0);
+  if(P.sh<2) P.sh=2;
+  const {bw,bh,bl,L,lw,hw,hh,hd,sw,sh,sl}=P;
+  const rig={type:'dog',P,nodes:[],ears:[],legs:{},eyes:[]};
+  const root=new THREE.Group(); rig.root=root;
+  const mover=track(rig,new THREE.Group()); root.add(mover); rig.mover=mover;
+  const hipZ=-bl/2+lw/2;
+  const bodyG=new THREE.Group(); bodyG.position.set(0,L,hipZ); mover.add(bodyG); track(rig,bodyG); rig.bodyG=bodyG;
+  const inner=new THREE.Group(); inner.position.set(0,-L,-hipZ); bodyG.add(inner);
+  // 胴体
+  inner.add(vmesh(vbox(bw,bh,bl,-bw/2,L,-bl/2,(x,y,z)=>bodyColor(P,x,y,z))));
+  if(P.ruff) inner.add(vmesh(vbox(bw+2,bh,2,-(bw+2)/2,L+1,bl/2-1.5,()=>P.ruff)));
+  // 脚
+  const legX=Math.max(bw/2-lw/2,lw/2), fz=bl/2-lw/2;
+  [['FL',legX,fz,true],['FR',-legX,fz,true],['RL',legX,hipZ,false],['RR',-legX,hipZ,false]].forEach(([n,x,z,front],li)=>{
+    const piv=new THREE.Group(); piv.position.set(x,L,z); inner.add(piv); track(rig,piv);
+    const m=vmesh(vbox(lw,L+1,lw,-lw/2,-L,-lw/2,(xx,yy,zz)=>legColor(P,front,yy,li,zz)));
+    m.scale.set(0.97,1,0.97); piv.add(m); rig.legs[n]=piv;
+  });
+  // 頭
+  const head=new THREE.Group(); head.position.set(0,L+bh-1,bl/2-1); inner.add(head); track(rig,head); rig.head=head;
+  const eyeY=Math.min(sh+1.5,hh-1.5), eyeRow=Math.floor(eyeY), ex=Math.max(1,hw/2-1.5);
+  const hm=vmesh(vbox(hw,hh,hd,-hw/2,0,-1,(x,y,z)=>headColor(P,x,y,z,eyeRow,ex))); hm.scale.setScalar(1.004); head.add(hm);
+  const sz0=hd-1;
+  const sc=P.snoutC||(['blaze','cheeks','mask','halfface'].includes(P.head)?P.c2:(P.headC||P.c1));
+  const muzzle=P.beard||sc;
+  head.add(vmesh(vbox(sw,sh-1,sl,-sw/2,1,sz0,()=>muzzle)));
+  const jaw=new THREE.Group(); jaw.position.set(0,1,sz0); head.add(jaw); track(rig,jaw); rig.jaw=jaw;
+  const bd=P.beard?1:0;
+  jaw.add(vmesh(vbox(sw,1+bd,sl,-sw/2,-1-bd,0,()=>muzzle)));
+  const tongue=cube(Math.max(1,sw-1.4),0.2,sl*0.8,'#ee7d8c'); tongue.position.set(0,0.1,sl*0.45); jaw.add(tongue);
+  if(P.tongue){ const tg=cube(1,1.2,0.3,'#ee7d8c'); tg.position.set(0.2,-0.5,sl+0.1); jaw.add(tg); }
+  const nw=sw>=4?2:1, nose=cube(nw,1,1,P.nose); nose.position.set(0,sh-0.45,sz0+sl-0.3); head.add(nose);
+  for(const s of [1,-1]){
+    const eg=new THREE.Group(); eg.position.set(s*ex,eyeY,sz0+0.12); head.add(eg); rig.eyes.push(eg);
+    const e=cube(P.eS,P.eS,0.3,P.eye); eg.add(e);
+    const hl=cube(0.34*P.eS,0.34*P.eS,0.1,'#ffffff'); hl.position.set(0.2*P.eS,0.2*P.eS,0.17); eg.add(hl);
+  }
+  // 耳
+  const earC=P.earC||P.headC||P.c1, inC=shade(earC,0.35);
+  for(const s of [1,-1]){
+    const piv=new THREE.Group(); let list=[], re=[0,0,0];
+    if(P.ear==='flop'){
+      piv.position.set(s*hw/2,hh-0.5,(hd-2)/2-0.5);
+      list=vbox(P.eW,P.eL,P.eD,s>0?0:-P.eW,-P.eL+0.5,-P.eD/2,()=>earC);
+    } else if(P.ear==='fold'){
+      piv.position.set(s*(hw/2-0.6),hh,hd/2-1.5);
+      list=vbox(2,1,2,-1,0,-1,()=>earC).concat(vbox(2,1,1,-1,-0.6,1,()=>earC));
+    } else { // prick / bat / butterfly
+      const w=P.eW,h=P.eL;
+      piv.position.set(s*(hw/2-w),hh,(hd-2)/2-1);
+      for(let r=0;r<h;r++){ const width=Math.max(1,w-Math.floor(r*w/h));
+        for(let i=0;i<w;i++){ const keep=s>0?i>=w-width:i<width; if(!keep) continue;
+          const xx=s>0?i:-w+i;
+          list.push([xx,r,-1,earC]);
+          const inner=(r<h-1&&width>1&&(s>0?i>w-width:i<width-1))||(w===1&&r<h-1&&h>2);
+          list.push([xx,r,0,inner?inC:earC]);
+        }}
+      if(P.ear==='bat') re=[0,0,-s*0.3];
+      if(P.ear==='butterfly') re=[0,0,-s*0.6];
+    }
+    piv.add(vmesh(list)); head.add(piv); track(rig,piv,...re); piv.userData.s=s; rig.ears.push(piv);
+  }
+  if(P.topknot){
+    head.add(vmesh(vbox(3,1,3,-1.5,hh,hd/2-2.5,()=>P.headC||P.c1)));
+    if(P.bow){ const b=cube(2.2,0.9,0.9,P.bow); b.position.set(0,hh+1.3,hd/2-1); head.add(b); const k=cube(0.7,0.7,1,shade(P.bow,-0.2)); k.position.copy(b.position); head.add(k); }
+  }
+  // 首輪
+  const collar=cube(hw+0.25,0.8,hd+0.25,'#e04848'); collar.position.set(0,0.35,hd/2-1); head.add(collar);
+  const tag=cube(0.7,0.7,0.2,'#f2c94c'); tag.position.set(0,-0.3,hd-0.8); collar.add(tag);
+  rig.collar=collar;
+  // しっぽ
+  const tail=new THREE.Group(); tail.position.set(0,L+bh-1,-bl/2+0.5); inner.add(tail);
+  const tc=P.tailC||P.c1, tip=P.tailTip;
+  let pts=[], w=P.tW, rx=-0.3;
+  const chain=n=>{ for(let i=0;i<n;i++) pts.push([0,i,0]); };
+  switch(P.tail){
+    case 'up': chain(P.tl); rx=-0.3; break;
+    case 'stub': chain(Math.max(1,P.tl)); rx=-0.6; break;
+    case 'curl': pts=[[0,0,0],[0,1,0],[0,2,0],[0,3,1],[0,3,2],[0,2,3]]; rx=0; break;
+    case 'fluffy': w=Math.max(2,w); pts=[[0,0,0],[0,1,0],[0,2,1],[0,2,2],[0,2,3],[0,1,3]]; rx=-0.1; break;
+    case 'feather': case 'down': chain(P.tl); rx=-2.25; break;
+    case 'whip': w=1; chain(P.tl); rx=-2.5; break;
+    case 'pom': w=1; chain(P.tl); rx=-0.45; break;
+    case 'pugcurl': w=Math.max(2,w); pts=[[0,0,0],[0,1,0],[0,1,1]]; rx=0.2; break;
+  }
+  const tv=[], seen=new Set();
+  pts.forEach((p,pi)=>{ for(let a=0;a<w;a++)for(let b=0;b<w;b++)for(let c=0;c<w;c++){
+    const v=[p[0]-w/2+a,p[1]+b,p[2]-w/2+c];
+    const k=v.join(','); if(seen.has(k)) continue; seen.add(k);
+    tv.push([v[0],v[1],v[2],(tip&&pi===pts.length-1)?tip:tc]); } });
+  if(P.tail==='pom') for(let a=0;a<2;a++)for(let b=0;b<2;b++)for(let c=0;c<2;c++) tv.push([-1+a,P.tl+b,-1+c,tc]);
+  tail.add(vmesh(tv)); track(rig,tail,rx,0,0); rig.tail=tail;
+  // 電話（小道具）
+  const phone=new THREE.Group();
+  const pb=cube(1.3,2.2,0.35,'#2f3440'); phone.add(pb);
+  const scr=cube(1.05,1.8,0.06,'#8fd4ff'); scr.position.z=-0.2; phone.add(scr);
+  phone.position.set(0.3,-L+0.6,lw/2+0.4); phone.visible=false;
+  rig.legs.FR.add(phone); rig.phone=phone;
+  // サイズ情報
+  rig.height=(L+bh+hh)*VOX; rig.withers=(L+bh)*VOX; rig.len=(bl+hd+sl)*VOX;
+  resetRig(rig); snapRig(rig);
+  return rig;
+}
+
+/* ---------- 犬のモーション ---------- */
+const DOG_MOTIONS=[['idle','待機'],['walk','歩く'],['run','走る'],['sit','おすわり'],['down','伏せ'],['sleep','寝る'],['jump','ジャンプ'],['happy','喜ぶ'],['bark','吠える'],['shake','ブルブル'],['dig','穴掘り'],['sad','しょんぼり'],['beg','おねだり'],['phone','電話'],['paw','お手'],['spin','くるくる'],['sniff','クンクン']];
+function dogWag(R,amt){ rot(R.tail,0,0,amt); }
+function dogEars(R,amt,back=0){ for(const e of R.ears){ if(R.P.ear==='flop') rot(e,back,0,e.userData.s*amt); else rot(e,-amt*0.6-back,0,0); } }
+function sitPose(R){
+  const P=R.P, D=P.bl-P.lw, L=P.L;
+  const a=Math.min(1.0,Math.max(0.12,Math.asin(Math.max(-0.99,Math.min(0.99,(L-0.3)/D)))));
+  const hipY=Math.max(0.2,L-D*Math.sin(a));
+  const beta=Math.acos(Math.min(1,hipY/L));
+  return {a,hipY,beta};
+}
+function animateDog(R,m,t){
+  resetRig(R);
+  const P=R.P, Lg=R.legs, s=Math.sin;
+  let blink=((t+P.seed)%3.7)<0.13, eyeS=1;
+  R.phone.visible=false;
+  switch(m){
+    case 'idle':
+      pos(R.bodyG,0,s(t*2.2)*0.12,0); dogWag(R,s(t*5)*0.35); rot(R.head,s(t*0.7)*0.06,s(t*0.5)*0.15,0); dogEars(R,0.05+s(t*1.3)*0.04); break;
+    case 'walk': { const ph=t*7;
+      rot(Lg.FL,s(ph)*0.5); rot(Lg.RR,s(ph)*0.5); rot(Lg.FR,-s(ph)*0.5); rot(Lg.RL,-s(ph)*0.5);
+      pos(R.bodyG,0,Math.abs(s(ph))*0.25,0); rot(R.head,s(ph*2)*0.04); dogWag(R,s(t*7)*0.4); dogEars(R,0.1+Math.abs(s(ph))*0.1); break; }
+    case 'run': { const ph=t*13;
+      rot(Lg.FL,s(ph)*0.95); rot(Lg.FR,s(ph+0.35)*0.95); rot(Lg.RL,s(ph+Math.PI)*0.95); rot(Lg.RR,s(ph+Math.PI+0.35)*0.95);
+      rot(R.bodyG,s(ph)*0.12); pos(R.mover,0,Math.abs(s(ph))*1.2,0); rot(R.tail,-0.6,0,s(ph)*0.2); rot(R.head,-s(ph)*0.1+0.1);
+      dogEars(R,0.5+s(ph)*0.3,0.4); break; }
+    case 'sit': case 'phone': case 'paw': { const S=sitPose(R);
+      rot(R.bodyG,-S.a); pos(R.bodyG,0,S.hipY-P.L,0);
+      rot(Lg.FL,S.a); rot(Lg.FR,S.a); rot(Lg.RL,-S.beta+S.a,0,0.15); rot(Lg.RR,-S.beta+S.a,0,-0.15);
+      rot(R.head,S.a*0.85+s(t*0.8)*0.04); rot(R.tail,-0.9,0,s(t*5)*0.4); dogEars(R,0.06);
+      if(m==='phone'){ rot(Lg.FR,S.a-2.55,0,-0.35); rot(R.head,S.a*0.85+0.05,0.15,0.28); R.phone.visible=true;
+        rot(R.jaw,Math.max(0,s(t*11))*0.28*(s(t*1.7)>-0.3?1:0)); dogEars(R,-0.08,0); }
+      if(m==='paw'){ rot(Lg.FR,S.a-1.35+s(t*4)*0.1,0,0); rot(R.head,S.a*0.85,0,s(t*2)*0.2); rot(R.tail,-0.9,0,s(t*12)*0.5); }
+      break; }
+    case 'down': case 'sleep': {
+      pos(R.bodyG,0,P.lw/2-P.L,0); rot(Lg.FL,-1.45); rot(Lg.FR,-1.45); rot(Lg.RL,-1.45,0,0.2); rot(Lg.RR,-1.45,0,-0.2);
+      rot(R.tail,-1.4,0,m==='sleep'?0.6:s(t*3)*0.3);
+      if(m==='sleep'){ rot(R.head,0.32,0.25,0.15); pos(R.head,0,-1.2,0); pos(R.bodyG,0,P.lw/2-P.L+s(t*1.6)*0.12,0); eyeS=0.12; dogEars(R,-0.1,0.2); }
+      else { rot(R.head,0.05,s(t*0.6)*0.25); dogEars(R,0.06); }
+      break; }
+    case 'jump': { const cyc=1.3, p=(t%cyc)/cyc;
+      let y=0, crouch=0;
+      if(p<0.2) crouch=s(p/0.2*Math.PI); else if(p<0.8) y=s((p-0.2)/0.6*Math.PI)*8;
+      pos(R.mover,0,y,0); pos(R.bodyG,0,-crouch*1.2,0);
+      const air=p>=0.2&&p<0.8; const up=p<0.5;
+      rot(Lg.FL,air?-0.8:crouch*0.4); rot(Lg.FR,air?-0.8:crouch*0.4); rot(Lg.RL,air?0.9:-crouch*0.5); rot(Lg.RR,air?0.9:-crouch*0.5);
+      rot(R.bodyG,air?(up?-0.3:0.25):0); rot(R.tail,-0.5,0,s(t*10)*0.3); dogEars(R,air?0.7:0.1,air?0.3:0); break; }
+    case 'happy': {
+      const hop=Math.max(0,s(t*9));
+      rot(R.bodyG,-hop*0.18); rot(Lg.FL,-hop*0.6); rot(Lg.FR,-hop*0.6);
+      pos(R.mover,0,hop*0.6,0); rot(R.mover,0,s(t*4.5)*0.3,0);
+      dogWag(R,s(t*20)*0.7); rot(R.head,-0.1,0,s(t*3)*0.2); rot(R.jaw,0.3); dogEars(R,0.3+hop*0.2); break; }
+    case 'bark': { const b=Math.max(0,s(t*7))**2;
+      rot(R.head,-0.15-b*0.15); rot(R.jaw,b*0.55); rot(Lg.FL,-0.15); rot(Lg.FR,-0.15); rot(R.bodyG,-b*0.06);
+      rot(R.tail,-0.1,0,s(t*8)*0.2); dogEars(R,0.25+b*0.35,0.1); break; }
+    case 'shake': { const on=((t%2.2)<1.2)?1:0; const sh=s(t*34)*on;
+      rot(R.bodyG,0,0,sh*0.22); rot(R.head,0,sh*0.4,-sh*0.3); dogEars(R,0.3+sh*0.9); dogWag(R,sh*0.8); blink=on?true:blink; break; }
+    case 'dig':
+      rot(R.bodyG,0.22); pos(R.bodyG,0,-0.4,0); rot(Lg.FL,s(t*16)*0.9-0.4); rot(Lg.FR,-s(t*16)*0.9-0.4);
+      rot(Lg.RL,-0.3); rot(Lg.RR,-0.3); rot(R.head,0.45); dogWag(R,s(t*10)*0.5); dogEars(R,0.15); break;
+    case 'sad':
+      rot(R.head,0.42+s(t*0.8)*0.03,0,s(t*0.5)*0.08); rot(R.tail,-1.9,0,0); dogEars(R,-0.15,0.35);
+      pos(R.bodyG,0,-0.3+s(t*1.2)*0.06,0); eyeS=0.55; rot(R.bodyG,0.05); break;
+    case 'beg': {
+      const a=1.15; rot(R.bodyG,-a); rot(Lg.RL,a); rot(Lg.RR,a);
+      rot(Lg.FL,a-1.3+s(t*6)*0.35); rot(Lg.FR,a-1.3-s(t*6)*0.35);
+      rot(R.head,a*0.85,0,s(t*2)*0.2); rot(R.tail,-1.6,0,s(t*14)*0.5); dogEars(R,0.2); break; }
+    case 'spin': { const ph=t*9;
+      rot(R.mover,0,t*5,0); rot(Lg.FL,s(ph)*0.6); rot(Lg.RR,s(ph)*0.6); rot(Lg.FR,-s(ph)*0.6); rot(Lg.RL,-s(ph)*0.6);
+      dogWag(R,s(t*18)*0.6); dogEars(R,0.5); pos(R.mover,0,Math.abs(s(ph))*0.3,0); break; }
+    case 'sniff': { const step=s(t*2.5);
+      rot(R.bodyG,0.18); rot(R.head,0.55+s(t*14)*0.05,step*0.35,0); pos(R.bodyG,0,-0.3,0);
+      rot(Lg.FL,step*0.25); rot(Lg.FR,-step*0.25); rot(R.jaw,0); dogWag(R,s(t*6)*0.35); dogEars(R,0.05); break; }
+  }
+  const ey=blink?0.12:eyeS;
+  for(const e of R.eyes) e.scale.y=ey;
+}
+
+/* =========================================================
+   人間：デフォルメキャラ（キャラクリ）
+   ========================================================= */
+const HUMAN_DEF={heads:2.8,height:1,build:1,skin:'#ffe0c9',hair:'short',hairC:'#4a3426',eyes:'round',eyeC:'#3a2618',brows:'normal',mouth:'smile',blush:true,
+  hat:'none',hatC:'#8a8296',top:'hoodie',topC:'#efeae6',accC:'#8a8296',bottom:'shorts',botC:'#4a4650',shoes:'sneaker',shoeC:'#ffffff',sockC:'#ffffff',acc:[]};
+const PARTS={
+  hair:[['short','ショート'],['bob','ボブ'],['long','ロング'],['ponytail','ポニテ'],['twintail','ツインテ'],['bun','おだんご'],['spiky','ツンツン'],['curly','くせ毛'],['mohawk','モヒカン'],['none','なし']],
+  eyes:[['round','まる目'],['sparkle','キラキラ'],['sharp','つり目'],['sleepy','たれ目'],['smile','にっこり'],['wink','ウインク'],['dot','てん目']],
+  brows:[['normal','ふつう'],['worried','困り眉'],['angry','怒り眉'],['none','なし']],
+  mouth:[['smile','にこ'],['grin','にかっ'],['fang','八重歯'],['cat','ω'],['o','おっ'],['flat','むっ']],
+  hat:[['none','なし'],['cap','キャップ'],['beanie','ニット帽'],['beret','ベレー'],['hood_cat','けもフード'],['hood_bear','くまフード'],['hood_rabbit','うさフード'],['catband','ネコ耳'],['ribbon','リボン']],
+  top:[['hoodie','パーカー'],['tshirt','Tシャツ'],['jacket','ジャケット'],['tank','タンクトップ'],['sweater','セーター'],['dress','ワンピース']],
+  bottom:[['shorts','ショートパンツ'],['pants','ロングパンツ'],['cargo','カーゴ'],['skirt','スカート']],
+  shoes:[['sneaker','スニーカー'],['boots','ブーツ'],['sandal','サンダル']],
+  acc:[['headphones','ヘッドホン'],['glasses','メガネ'],['bag','ショルダー'],['backpack','リュック'],['tail','しっぽ'],['scarf','マフラー'],['cup','カップ'],['phone','スマホ']],
+};
+const HUMAN_PRESETS=[
+  ['けもフードっ子',{heads:2.6,hair:'short',hairC:'#f4e3b5',eyes:'wink',eyeC:'#3aa8a0',mouth:'grin',hat:'hood_cat',hatC:'#8a8296',top:'hoodie',topC:'#efeae6',accC:'#8a8296',bottom:'shorts',botC:'#7d7590',shoes:'sneaker',shoeC:'#f5f5f5',sockC:'#ffffff',acc:['tail']}],
+  ['スポーティ',{heads:4.2,hair:'ponytail',hairC:'#f08cc0',eyes:'sharp',eyeC:'#c0446a',mouth:'smile',hat:'cap',hatC:'#ffffff',top:'tank',topC:'#f2ede4',accC:'#e86a8f',bottom:'cargo',botC:'#5a5560',shoes:'sneaker',shoeC:'#ffffff',acc:['headphones']}],
+  ['カジュアル',{heads:3.3,hair:'curly',hairC:'#4a3426',eyes:'round',eyeC:'#5a3a22',mouth:'smile',hat:'cap',hatC:'#e3d3b8',top:'hoodie',topC:'#7a7d52',accC:'#e3d3b8',bottom:'shorts',botC:'#d8c9ad',shoes:'sneaker',shoeC:'#e3d6c0',sockC:'#ffffff',acc:['bag','headphones','cup']}],
+  ['しっかり者',{heads:3.6,hair:'bob',hairC:'#2b211c',eyes:'sleepy',eyeC:'#5a8fd6',mouth:'smile',hat:'none',top:'jacket',topC:'#3d4a6b',accC:'#ffffff',bottom:'pants',botC:'#3d4a6b',shoes:'boots',shoeC:'#4a3426',acc:['glasses']}],
+  ['ヒーロー',{heads:3.4,hair:'spiky',hairC:'#e0533f',eyes:'sharp',eyeC:'#d6a03a',mouth:'fang',hat:'none',top:'jacket',topC:'#25232a',accC:'#e84d5b',bottom:'cargo',botC:'#4a4650',shoes:'boots',shoeC:'#25232a',acc:['scarf']}],
+];
+function sp(r,phi,theta){ return new THREE.Vector3(-Math.cos(phi)*Math.sin(theta),Math.cos(theta),Math.sin(phi)*Math.sin(theta)).multiplyScalar(r); }
+function capsule(r,h,m){ let g; if(h>2*r+0.001) g=new THREE.CapsuleGeometry(r,h-2*r,6,16); else { g=new THREE.SphereGeometry(r,20,14); g.scale(1,h/(2*r),1); } const me=new THREE.Mesh(g,m); me.castShadow=true; me.receiveShadow=true; return me; }
+function at(m,x,y,z){ m.position.set(x,y,z); return m; }
+function sph(r,m,ws=24,hs=16){ const me=new THREE.Mesh(new THREE.SphereGeometry(r,ws,hs),m); me.castShadow=true; return me; }
+function cyl(rt,rb,h,m,seg=20,open=false){ const me=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg,1,open),m); me.castShadow=true; return me; }
+function partSphere(r,m,ps,pl,ts,tl){ const me=new THREE.Mesh(new THREE.SphereGeometry(r,40,24,ps,pl,ts,tl),m); me.castShadow=true; return me; }
+
+/* ---------- 顔テクスチャ ---------- */
+const FACE_W=256;
+function drawFace(cv,H,closed){
+  const g=cv.getContext('2d'); g.clearRect(0,0,FACE_W,FACE_W);
+  const ink='#3a2620', ex=47, ey=104;
+  g.lineCap='round'; g.lineJoin='round';
+  const ell=(x,y,rx,ry,fill)=>{ g.fillStyle=fill; g.beginPath(); g.ellipse(x,y,rx,ry,0,0,Math.PI*2); g.fill(); };
+  if(H.blush) for(const s of [-1,1]) ell(128+s*74,142,21,11,'rgba(255,110,130,0.38)');
+  // 眉
+  if(H.brows!=='none'){ g.strokeStyle=shade(H.hairC,-0.35); g.lineWidth=6;
+    for(const s of [-1,1]){ const x=128+s*ex; let yi=64,yo=60;
+      if(H.brows==='worried'){yi=53;yo=64;} if(H.brows==='angry'){yi=68;yo=53;}
+      g.beginPath(); g.moveTo(x-s*15,yi); g.quadraticCurveTo(x,Math.min(yi,yo)-4,x+s*15,yo); g.stroke(); } }
+  // 目
+  const eye=(x,rx,ry,dy=0)=>{ const y=ey+dy;
+    ell(x,y,rx,ry,'#2a1c15'); ell(x,y+ry*0.22,rx*0.8,ry*0.68,H.eyeC); ell(x,y+ry*0.3,rx*0.4,ry*0.36,shade(H.eyeC,-0.5));
+    ell(x-rx*0.3,y-ry*0.36,rx*0.38,ry*0.3,'#fff'); ell(x+rx*0.38,y+ry*0.46,rx*0.17,rx*0.17,'#fff');
+    g.strokeStyle='#2a1c15'; g.lineWidth=5; g.beginPath(); g.ellipse(x,y,rx+1.5,ry+1.5,0,Math.PI*1.12,Math.PI*1.88); g.stroke(); };
+  for(const s of [-1,1]){
+    const x=128+s*ex;
+    let t=closed?'blink':H.eyes; if(H.eyes==='wink'&&s===1) t='smile'; else if(H.eyes==='wink') t=closed?'blink':'round';
+    g.strokeStyle=ink; g.lineWidth=6;
+    if(t==='blink'){ g.beginPath(); g.moveTo(x-15,ey+5); g.quadraticCurveTo(x,ey+13,x+15,ey+5); g.stroke(); }
+    else if(t==='smile'){ g.beginPath(); g.arc(x,ey+12,15,Math.PI*1.15,Math.PI*1.85); g.stroke(); }
+    else if(t==='round') eye(x,17,26);
+    else if(t==='sparkle'){ eye(x,18,27); g.fillStyle='#fff'; const sx=x+6,sy=ey+2; g.beginPath(); g.moveTo(sx,sy-8); g.lineTo(sx+2.5,sy-2.5); g.lineTo(sx+8,sy); g.lineTo(sx+2.5,sy+2.5); g.lineTo(sx,sy+8); g.lineTo(sx-2.5,sy+2.5); g.lineTo(sx-8,sy); g.lineTo(sx-2.5,sy-2.5); g.closePath(); g.fill(); }
+    else if(t==='sharp'){ eye(x,16,21,4); g.strokeStyle='#2a1c15'; g.lineWidth=7; g.beginPath(); g.moveTo(x-s*19,ey-10); g.lineTo(x+s*19,ey-20); g.stroke(); }
+    else if(t==='sleepy'){ g.save(); g.beginPath(); g.rect(x-30,ey-4,60,50); g.clip(); eye(x,17,24); g.restore(); g.strokeStyle='#2a1c15'; g.lineWidth=6; g.beginPath(); g.moveTo(x-19,ey-3); g.quadraticCurveTo(x,ey-9,x+19,ey-3); g.stroke(); }
+    else if(t==='dot'){ ell(x,ey+4,8,10,'#2a1c15'); ell(x-3,ey,3,3,'#fff'); }
+  }
+  // 口
+  g.strokeStyle=ink; g.lineWidth=5; const my=168;
+  switch(H.mouth){
+    case 'smile': g.beginPath(); g.arc(128,my-10,13,Math.PI*0.2,Math.PI*0.8); g.stroke(); break;
+    case 'grin': g.fillStyle='#7a2d2d'; g.beginPath(); g.moveTo(110,my-2); g.quadraticCurveTo(128,my+30,146,my-2); g.closePath(); g.fill(); ell(128,my+12,9,5.5,'#f08a8a'); g.stroke(); break;
+    case 'fang': g.beginPath(); g.arc(128,my-10,13,Math.PI*0.2,Math.PI*0.8); g.stroke(); g.fillStyle='#fff'; g.beginPath(); g.moveTo(132,my+1); g.lineTo(140,my-1); g.lineTo(137,my+8); g.closePath(); g.fill(); break;
+    case 'cat': g.beginPath(); g.arc(121,my-2,7,0,Math.PI); g.stroke(); g.beginPath(); g.arc(135,my-2,7,0,Math.PI); g.stroke(); break;
+    case 'o': ell(128,my+2,7,9,'#7a2d2d'); break;
+    case 'flat': g.beginPath(); g.moveTo(117,my); g.lineTo(139,my); g.stroke(); break;
+  }
+}
+
+/* ---------- 人間の組み立て ---------- */
+function buildHuman(H0){
+  const H=Object.assign({},HUMAN_DEF,H0); H.acc=H.acc||[];
+  const T=1.5*H.height, n=H.heads, R=T/(2*n);
+  const rem=T-1.85*R, legLen=rem*0.5, torsoLen=rem*0.42, neckLen=rem*0.08;
+  const tw=(0.075*T+0.25*R)*H.build;
+  const armR=tw*0.3, upper=torsoLen*0.5, fore=torsoLen*0.46, handR=armR*1.35;
+  const legR=tw*0.42, footH=Math.max(legR*1.15,legLen*0.1), thigh=(legLen-footH)/2, shin=thigh;
+  const rig={type:'human',H,nodes:[],dims:{T,R,tw,torsoLen,neckLen,legLen,upper,fore,handR,armR,legR,headY:torsoLen+neckLen+0.85*R}};
+  const root=new THREE.Group(); rig.root=root;
+  const mSkin=mat(H.skin), mTop=mat(H.topC), mAcc=mat(H.accC), mBot=mat(H.botC), mHair=mat(H.hairC), mHat=mat(H.hatC),
+        mShoe=mat(H.shoeC), mSock=mat(H.sockC), mWhite=mat('#f7f5f2'), mDark=mat('#2f3440');
+  const mHairD=mat(H.hairC,{side:THREE.DoubleSide}), mHatD=mat(H.hatC,{side:THREE.DoubleSide});
+  const mover=track(rig,new THREE.Group()); root.add(mover); rig.mover=mover;
+  const hips=new THREE.Group(); hips.position.y=legLen; mover.add(hips); track(rig,hips); rig.hips=hips;
+  const torso=new THREE.Group(); hips.add(torso); track(rig,torso); rig.torso=torso;
+  const dress=H.top==='dress';
+  // 胴
+  const tm=capsule(tw,torsoLen+tw*0.25,mTop); tm.scale.z=0.72; tm.position.y=torsoLen/2; torso.add(tm);
+  const pel=sph(tw*1.02,dress?mTop:(H.bottom==='skirt'?mBot:mBot)); pel.scale.set(1,0.55,0.74); pel.position.y=0.02; hips.add(pel);
+  const fz=tw*0.72;
+  if(H.top==='hoodie'){
+    const hood=sph(tw*0.95,mTop); hood.scale.set(1.15,0.55,0.7); hood.position.set(0,torsoLen*0.97,-tw*0.55); torso.add(hood);
+    const pk=cube(tw*1.1,torsoLen*0.22,0.01,H.accC); pk.position.set(0,torsoLen*0.28,fz*0.97); pk.geometry.scale(1,1,1); torso.add(pk);
+    for(const s of [-1,1]){ const st=cyl(tw*0.03,tw*0.03,torsoLen*0.28,mAcc,8); st.position.set(s*tw*0.22,torsoLen*0.72,fz*0.98); torso.add(st); const b=sph(tw*0.06,mAcc,8,6); b.position.set(s*tw*0.22,torsoLen*0.57,fz); torso.add(b); }
+  }
+  if(H.top==='jacket'){
+    const inner=cube(tw*0.55,torsoLen*0.95,0.01,H.accC); inner.position.set(0,torsoLen*0.5,fz*0.985); torso.add(inner);
+    const col=new THREE.Mesh(new THREE.TorusGeometry(tw*0.42,tw*0.11,8,20),mTop); col.rotation.x=Math.PI/2; col.position.y=torsoLen*0.98; col.scale.z=0.8; torso.add(col);
+  }
+  if(H.top==='sweater'){ const hem=cyl(tw*1.02,tw*1.02,torsoLen*0.12,mat(shade(H.topC,-0.12)),20); hem.scale.z=0.74; hem.position.y=torsoLen*0.08; torso.add(hem); }
+  if(H.top==='tshirt'||H.top==='tank'||H.top==='dress'){ const nk=cyl(tw*0.36,tw*0.36,0.005,mSkin,16); nk.position.y=torsoLen*1.0; torso.add(nk); }
+  // スカート/ワンピース
+  if(dress||H.bottom==='skirt'){
+    const h=legLen*0.46, sk=cyl(tw*0.98,tw*1.65,h,dress?mTop:mBot,28,true); sk.material=mat(dress?H.topC:H.botC,{side:THREE.DoubleSide});
+    sk.scale.z=0.82; sk.position.y=-h/2+tw*0.2; hips.add(sk);
+  }
+  // 首・頭
+  const nk=cyl(tw*0.3,tw*0.3,neckLen+R*0.3,mSkin,12); nk.position.y=torsoLen+neckLen/2; torso.add(nk);
+  const neck=new THREE.Group(); neck.position.y=torsoLen; torso.add(neck); track(rig,neck); rig.neck=neck;
+  const head=new THREE.Group(); head.position.y=neckLen+R*0.85; neck.add(head); rig.head=head;
+  head.add(sph(R,mSkin,48,32));
+  for(const s of [-1,1]){ const e=sph(R*0.17,mSkin,12,8); e.scale.set(0.6,1,0.8); e.position.set(s*R*0.97,-R*0.08,0); head.add(e); }
+  // 顔
+  const cvO=document.createElement('canvas'), cvC=document.createElement('canvas'); cvO.width=cvO.height=cvC.width=cvC.height=FACE_W;
+  drawFace(cvO,H,false); drawFace(cvC,H,true);
+  const texO=new THREE.CanvasTexture(cvO), texC=new THREE.CanvasTexture(cvC); texO.colorSpace=texC.colorSpace=THREE.SRGBColorSpace;
+  const faceMat=new THREE.MeshStandardMaterial({map:texO,transparent:true,roughness:0.6,polygonOffset:true,polygonOffsetFactor:-2,depthWrite:false});
+  const face=new THREE.Mesh(new THREE.SphereGeometry(R*1.003,48,32,Math.PI/2-0.95,1.9,Math.PI*0.35,Math.PI*0.5),faceMat);
+  face.renderOrder=1; head.add(face); rig.face={mat:faceMat,open:texO,closed:texC};
+  // 髪
+  const hooded=H.hat.startsWith('hood');
+  const hair=new THREE.Group(); head.add(hair);
+  const bangs=()=>{ for(let k=-2;k<=2;k++){ const ph=Math.PI/2+k*0.3, th=Math.PI*(0.3+Math.abs(k)*0.025);
+      const b=sph(R*0.3,mHair,14,10); b.scale.set(0.95,1.3,0.55); const p=sp(R*0.97,ph,th); b.position.copy(p); b.lookAt(p.clone().multiplyScalar(2)); hair.add(b); } };
+  const dome=()=>{ hair.add(partSphere(R*1.07,mHairD,0,Math.PI*2,0,Math.PI*0.43)); };
+  const back=(th=0.68)=>{ hair.add(partSphere(R*1.06,mHairD,Math.PI,Math.PI,0,Math.PI*th)); };
+  if(H.hair!=='none'){
+    if(hooded){ bangs(); }
+    else switch(H.hair){
+      case 'short': dome(); back(0.66); bangs(); break;
+      case 'bob': dome(); hair.add(partSphere(R*1.1,mHairD,Math.PI/2+0.85,Math.PI*2-1.7,0,Math.PI*0.78)); bangs(); break;
+      case 'long': { dome(); hair.add(partSphere(R*1.1,mHairD,Math.PI/2+0.85,Math.PI*2-1.7,0,Math.PI*0.8)); bangs();
+        const lp=capsule(R*0.85,R*2.0,mHair); lp.scale.z=0.45; lp.position.set(0,-R*0.85,-R*0.55); hair.add(lp); break; }
+      case 'ponytail': { dome(); back(0.66); bangs(); const tie=sph(R*0.14,mAcc,12,8); tie.position.set(0,R*0.35,-R*1.03); hair.add(tie);
+        const pt=capsule(R*0.26,R*1.4,mHair); pt.position.set(0,-R*0.25,-R*1.25); pt.rotation.x=0.35; hair.add(pt); break; }
+      case 'twintail': { dome(); back(0.66); bangs(); for(const s of [-1,1]){ const tie=sph(R*0.13,mAcc,12,8); tie.position.set(s*R*0.92,R*0.35,-R*0.3); hair.add(tie);
+        const tt=capsule(R*0.24,R*1.3,mHair); tt.position.set(s*R*1.18,-R*0.25,-R*0.35); tt.rotation.z=s*0.25; hair.add(tt);} break; }
+      case 'bun': { dome(); back(0.66); bangs(); const bn=sph(R*0.4,mHair); bn.position.set(0,R*0.98,-R*0.35); hair.add(bn); break; }
+      case 'spiky': { dome(); back(0.62); bangs(); for(let i=0;i<11;i++){ const ph=i/11*Math.PI*2, th=Math.PI*(0.18+0.12*(i%2));
+          if(Math.abs(((ph-Math.PI/2+Math.PI*3)%(Math.PI*2))-Math.PI)<0.5) continue;
+          const c=new THREE.Mesh(new THREE.ConeGeometry(R*0.24,R*0.65,8),mHair); const p=sp(R*0.95,ph,th); c.position.copy(p);
+          c.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),p.clone().normalize()); c.castShadow=true; hair.add(c); }
+        const tc=new THREE.Mesh(new THREE.ConeGeometry(R*0.26,R*0.7,8),mHair); tc.position.set(0,R*1.05,0); hair.add(tc); break; }
+      case 'curly': { dome(); back(0.62); const N=34; for(let i=0;i<N;i++){ const y=1-(i/(N-1))*1.15, r=Math.sqrt(Math.max(0,1-y*y)), a=i*2.399;
+          const p=new THREE.Vector3(Math.cos(a)*r,y,Math.sin(a)*r); if(p.z>0.35&&p.y<0.55) continue; if(p.y<-0.1&&p.z>-0.2) continue;
+          const b=sph(R*0.3,mHair,12,8); b.position.copy(p.multiplyScalar(R*1.02)); hair.add(b); } bangs(); break; }
+      case 'mohawk': for(let i=0;i<6;i++){ const th=Math.PI*(-0.3+i*0.14); const p=new THREE.Vector3(0,Math.cos(th),Math.sin(th)).multiplyScalar(R*0.95);
+          const c=new THREE.Mesh(new THREE.ConeGeometry(R*0.17,R*0.7,8),mHair); c.position.copy(p); c.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),p.clone().normalize()); hair.add(c); } break;
+    }
+  }
+  // 帽子
+  const hat=new THREE.Group(); head.add(hat);
+  switch(H.hat){
+    case 'cap': { hat.add(partSphere(R*1.11,mHatD,0,Math.PI*2,0,Math.PI*0.47));
+      const br=cyl(R*0.62,R*0.62,R*0.05,mHat,32); br.position.set(0,R*0.13,R*0.88); br.rotation.x=-0.12; hat.add(br);
+      const bt=sph(R*0.08,mHat,10,8); bt.position.y=R*1.1; hat.add(bt); break; }
+    case 'beanie': { hat.add(partSphere(R*1.12,mHatD,0,Math.PI*2,0,Math.PI*0.5));
+      const band=new THREE.Mesh(new THREE.TorusGeometry(R*1.1,R*0.11,10,40),mat(shade(H.hatC,-0.1))); band.rotation.x=Math.PI/2; band.position.y=R*0.08; hat.add(band);
+      const pp=sph(R*0.25,mWhite); pp.position.y=R*1.18; hat.add(pp); break; }
+    case 'beret': { const b=sph(R*0.95,mHat,32,16); b.scale.set(1.18,0.34,1.18); b.position.set(R*0.12,R*0.88,-R*0.05); b.rotation.z=-0.22; hat.add(b);
+      const st=cyl(R*0.04,R*0.04,R*0.15,mHat,6); st.position.set(R*0.06,R*1.2,-R*0.05); hat.add(st); break; }
+    case 'hood_cat': case 'hood_bear': case 'hood_rabbit': {
+      hat.add(partSphere(R*1.2,mHatD,Math.PI/2+1.0,Math.PI*2-2.0,0,Math.PI*0.86));
+      hat.add(partSphere(R*1.2,mHatD,Math.PI/2-1.0,2.0,0,Math.PI*0.33));
+      
+      const nb=sph(R*0.9,mHat,20,12); nb.scale.set(1.1,0.5,0.8); nb.position.set(0,-R*1.05,-R*0.45); hat.add(nb);
+      for(const s of [-1,1]){
+        if(H.hat==='hood_cat'){ const e=new THREE.Mesh(new THREE.ConeGeometry(R*0.34,R*0.7,16),mHat); e.position.set(s*R*0.62,R*1.05,-R*0.05); e.rotation.z=-s*0.38; e.castShadow=true; hat.add(e);
+          const ie=new THREE.Mesh(new THREE.ConeGeometry(R*0.2,R*0.45,16),mWhite); ie.position.set(s*R*0.6,R*1.0,R*0.16); ie.rotation.z=-s*0.38; hat.add(ie);
+          const f=new THREE.Mesh(new THREE.ConeGeometry(R*0.07,R*0.2,8),mWhite); f.position.copy(sp(R*1.15,Math.PI/2+s*0.28,Math.PI*0.36)); f.position.y-=R*0.1; f.rotation.x=Math.PI; hat.add(f); }
+        if(H.hat==='hood_bear'){ const e=sph(R*0.27,mHat); e.scale.z=0.6; e.position.set(s*R*0.78,R*0.92,0); hat.add(e); const ie=sph(R*0.15,mWhite); ie.scale.z=0.5; ie.position.set(s*R*0.78,R*0.92,R*0.1); hat.add(ie); }
+        if(H.hat==='hood_rabbit'){ const e=capsule(R*0.16,R*1.0,mHat); e.scale.z=0.6; e.position.set(s*R*0.38,R*1.55,-R*0.1); e.rotation.z=-s*0.15; hat.add(e); const ie=capsule(R*0.08,R*0.75,mat('#f6b6c8')); ie.scale.z=0.5; ie.position.set(s*R*0.38,R*1.55,-R*0.02); ie.rotation.z=-s*0.15; hat.add(ie); }
+      }
+      break; }
+    case 'catband': { const band=new THREE.Mesh(new THREE.TorusGeometry(R*1.05,R*0.04,8,32,Math.PI),mHat); band.rotation.y=Math.PI/2; band.position.z=R*0.1; hat.add(band);
+      for(const s of [-1,1]){ const e=new THREE.Mesh(new THREE.ConeGeometry(R*0.26,R*0.5,16),mHat); e.position.set(s*R*0.6,R*1.0,R*0.1); e.rotation.z=-s*0.4; hat.add(e);} break; }
+    case 'ribbon': { const g=new THREE.Group(); g.position.set(R*0.55,R*0.8,R*0.2); g.rotation.z=-0.5;
+      for(const s of [-1,1]){ const l=new THREE.Mesh(new THREE.ConeGeometry(R*0.2,R*0.4,12),mHat); l.rotation.z=s*Math.PI/2; l.position.x=s*R*0.18; g.add(l);} const k=sph(R*0.09,mHat); g.add(k); hat.add(g); break; }
+  }
+  // 腕
+  rig.sh={}; rig.el={};
+  for(const s of [-1,1]){
+    const sh=new THREE.Group(); sh.position.set(s*(tw*0.92+armR*0.4),torsoLen-armR*1.2,0); torso.add(sh); track(rig,sh,0,0,s*0.15);
+    const longSleeve=['hoodie','jacket','sweater'].includes(H.top), shortSleeve=['tshirt','dress'].includes(H.top);
+    sh.add(at(capsule(armR,upper+armR*2,longSleeve?mTop:mSkin),0,-upper/2,0));
+    if(shortSleeve){ const sl=capsule(armR*1.22,upper*0.6+armR*2,mTop); sl.position.y=-upper*0.25; sh.add(sl); }
+    const el=new THREE.Group(); el.position.y=-upper; sh.add(el); track(rig,el);
+    el.add(at(capsule(armR*0.95,fore+armR*1.9,longSleeve?mTop:mSkin),0,-fore/2,0));
+    if(longSleeve){ const cf=cyl(armR*1.08,armR*1.08,fore*0.2,H.top==='hoodie'?mAcc:mat(shade(H.topC,-0.12)),14); cf.position.y=-fore*0.88; el.add(cf); }
+    const hand=sph(handR,mSkin,16,12); hand.position.y=-fore-handR*0.55; el.add(hand);
+    const prop=new THREE.Group(); prop.position.y=-fore-handR*0.55; el.add(prop);
+    if(s<0){ rig.shR=sh; rig.elR=el;
+      const ph=new THREE.Group(); const pb=cube(R*0.2,R*0.36,R*0.05,'#2f3440'); ph.add(pb); const scn=cube(R*0.17,R*0.3,R*0.01,'#8fd4ff'); scn.position.z=R*0.03; ph.add(scn);
+      ph.position.set(-handR*0.4,-handR*0.2,handR*0.6); ph.rotation.set(0.2,-0.9,0); prop.add(ph); rig.phone=ph; ph.visible=H.acc.includes('phone');
+    } else { rig.shL=sh; rig.elL=el;
+      if(H.acc.includes('cup')){ const cup=cyl(handR*0.85,handR*0.7,handR*2.4,mat('#f2ebe0'),16); cup.position.set(0,-handR*0.3,handR*0.9); prop.add(cup);
+        const sl=cyl(handR*0.88,handR*0.8,handR*0.9,mat('#b07a4f'),16); sl.position.copy(cup.position); prop.add(sl);
+        const lid=cyl(handR*0.9,handR*0.9,handR*0.25,mWhite,16); lid.position.set(0,handR*0.95,handR*0.9); prop.add(lid); }
+    }
+  }
+  // 脚
+  rig.hip={}; rig.knee={};
+  for(const s of [-1,1]){
+    const hp=new THREE.Group(); hp.position.set(s*tw*0.5,0,0); hips.add(hp); track(rig,hp);
+    const pants=['pants','cargo'].includes(H.bottom)&&!dress, shorts=H.bottom==='shorts'&&!dress;
+    const rM=H.bottom==='cargo'&&!dress?1.32:1.1;
+    hp.add(at(capsule(legR*(pants||shorts?rM:1),thigh+legR*2,(pants||shorts)?mBot:mSkin),0,-thigh/2,0));
+    if(H.bottom==='cargo'&&!dress){ const pk=cube(legR*0.5,thigh*0.4,legR*0.9,shade(H.botC,-0.15)); pk.position.set(s*legR*1.3,-thigh*0.6,0); hp.add(pk); }
+    const kn=new THREE.Group(); kn.position.y=-thigh; hp.add(kn); track(rig,kn);
+    kn.add(at(capsule(legR*(pants?rM*0.95:0.95),shin+legR*1.9,pants?mBot:mSkin),0,-shin/2,0));
+    if(!pants&&H.shoes!=='sandal'){ const sk=cyl(legR*1.0,legR*1.0,shin*0.3,mSock,14); sk.position.y=-shin*0.82; kn.add(sk); }
+    const ank=new THREE.Group(); ank.position.y=-shin; kn.add(ank);
+    if(H.shoes==='sandal'){ const ft=sph(legR*0.95,mSkin,14,10); ft.scale.set(1.1,0.6,1.8); ft.position.set(0,-footH*0.45,legR*0.5); ank.add(ft);
+      const so=sph(legR*1.2,mShoe,16,10); so.scale.set(1.05,0.22,1.85); so.position.set(0,-footH*0.78,legR*0.5); ank.add(so);
+      const st=new THREE.Mesh(new THREE.TorusGeometry(legR*0.95,legR*0.12,6,16),mShoe); st.rotation.x=Math.PI/2; st.position.set(0,-footH*0.45,legR*0.7); st.scale.set(1.05,1.7,1); ank.add(st); }
+    else { const sh=sph(legR*1.25,mShoe,20,12); sh.scale.set(1.05,0.75*footH/(legR*1.25)/1.05,1.75); sh.position.set(0,-footH*0.32,legR*0.55); ank.add(sh);
+      const so=sph(legR*1.3,H.shoes==='boots'?mat(shade(H.shoeC,-0.3)):mWhite,20,10); so.scale.set(1.04,0.28*footH/(legR*1.3),1.8); so.position.set(0,-footH*0.74,legR*0.55); ank.add(so);
+      if(H.shoes==='boots'){ const bt=cyl(legR*1.12,legR*1.12,shin*0.5,mShoe,16); bt.position.y=-shin*0.72; kn.add(bt); }
+      else { const lace=cube(legR*0.7,legR*0.08,legR*0.6,'#ffffff'); lace.position.set(0,-footH*0.05,legR*1.05); lace.rotation.x=-0.5; ank.add(lace); } }
+    if(s<0){ rig.hipR=hp; rig.kneeR=kn; } else { rig.hipL=hp; rig.kneeL=kn; }
+  }
+  // 小物
+  const A=H.acc;
+  if(A.includes('headphones')){ const ring=new THREE.Mesh(new THREE.TorusGeometry(tw*0.62,tw*0.07,8,28),mWhite); ring.rotation.x=Math.PI/2*0.8; ring.position.set(0,torsoLen*0.98,0); torso.add(ring);
+    for(const s of [-1,1]){ const cp=cyl(tw*0.28,tw*0.28,tw*0.18,mWhite,18); cp.rotation.z=Math.PI/2; cp.rotation.y=s*0.6; cp.position.set(s*tw*0.55,torsoLen*0.96,tw*0.32); torso.add(cp);
+      const pad=cyl(tw*0.2,tw*0.2,tw*0.05,mAcc,18); pad.rotation.copy(cp.rotation); pad.position.copy(cp.position); pad.position.x+=s*tw*0.08; torso.add(pad);} }
+  if(A.includes('glasses')){ const gm=mat('#2b2522'); for(const s of [-1,1]){ const lr=new THREE.Mesh(new THREE.TorusGeometry(R*0.19,R*0.022,8,28),gm); lr.position.set(s*R*0.34,-R*0.15,R*1.02); lr.rotation.y=s*0.33; head.add(lr);
+      const tm2=cyl(R*0.018,R*0.018,R*0.75,gm,6); tm2.rotation.x=Math.PI/2; tm2.position.set(s*R*0.6,-R*0.12,R*0.62); tm2.rotation.y=s*0.25; head.add(tm2);}
+    const br=cyl(R*0.018,R*0.018,R*0.25,gm,6); br.rotation.z=Math.PI/2; br.position.set(0,-R*0.12,R*1.08); head.add(br); }
+  if(A.includes('bag')){ const st=new THREE.Mesh(new THREE.TorusGeometry(tw*1.15,tw*0.05,6,32),mAcc); st.scale.set(1,1.15,0.72); st.rotation.z=0.6; st.position.set(0,torsoLen*0.5,0); torso.add(st);
+    const bg=cube(tw*0.75,tw*0.6,tw*0.3,H.accC); bg.position.set(tw*0.98,torsoLen*0.02,tw*0.28); torso.add(bg); const fl=cube(tw*0.77,tw*0.3,tw*0.04,shade(H.accC,-0.15)); fl.position.set(tw*0.98,torsoLen*0.14,tw*0.44); torso.add(fl); }
+  if(A.includes('backpack')){ const bp=capsule(tw*0.55,torsoLen*0.78,mAcc); bp.scale.set(1.25,1,0.6); bp.position.set(0,torsoLen*0.52,-tw*0.95); torso.add(bp);
+    for(const s of [-1,1]){ const sp2=new THREE.Mesh(new THREE.TorusGeometry(torsoLen*0.36,tw*0.05,6,20,Math.PI),mAcc); sp2.rotation.y=Math.PI/2; sp2.position.set(s*tw*0.5,torsoLen*0.62,-tw*0.1); sp2.scale.z=0.9; torso.add(sp2);} }
+  if(A.includes('headset')){ const hb=new THREE.Mesh(new THREE.TorusGeometry(R*1.13,R*0.045,8,32,Math.PI),mDark); head.add(hb);
+    for(const s of [-1,1]){ const cp=cyl(R*0.2,R*0.2,R*0.12,mDark,16); cp.rotation.z=Math.PI/2; cp.position.set(s*R*1.08,0,0); head.add(cp); }
+    const a=new THREE.Vector3(-R*1.1,-R*0.05,0.05*R), b=new THREE.Vector3(-R*0.42,-R*0.55,R*0.92), d=b.clone().sub(a);
+    const boom=cyl(R*0.025,R*0.025,d.length(),mDark,6); boom.position.copy(a).add(b).multiplyScalar(0.5); boom.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize()); head.add(boom);
+    const mic=sph(R*0.07,mat('#e84d5b'),10,8); mic.position.copy(b); head.add(mic); }
+  if(A.includes('scarf')){ const sc=new THREE.Mesh(new THREE.TorusGeometry(tw*0.45,tw*0.17,10,24),mAcc); sc.rotation.x=Math.PI/2; sc.position.y=torsoLen*0.98; torso.add(sc);
+    const tl=cube(tw*0.35,torsoLen*0.5,tw*0.1,H.accC); tl.position.set(tw*0.3,torsoLen*0.68,fz+tw*0.05); tl.rotation.z=0.1; torso.add(tl); }
+  if(A.includes('tail')){ const tg=new THREE.Group(); tg.position.set(0,-tw*0.1,-tw*0.6); hips.add(tg); track(rig,tg); rig.tailH=tg;
+    const tcM=H.hat.startsWith('hood')||H.hat==='catband'?mHat:mHair; const Lq=legLen; const sz=[0.22,0.3,0.36,0.34];
+    sz.forEach((k,i)=>{ const b=sph(tw*k*1.4,i===3?mWhite:tcM,16,12); b.position.set(0,Lq*(-0.15+0.2*i),-Lq*(0.18*i+0.03*i*i)); tg.add(b); }); }
+  rig.height=T;
+  resetRig(rig); snapRig(rig);
+  return rig;
+}
+
+/* ---------- 人間のモーション ---------- */
+const HUMAN_MOTIONS=[['idle','待機'],['walk','歩く'],['run','走る'],['wave','手を振る'],['phone','電話'],['think','考える'],['cheer','バンザイ'],['jump','ジャンプ'],['bow','おじぎ'],['dance','ダンス'],['point','指差し'],['surprise','びっくり'],['sad','落ち込む']];
+const DOWN=new THREE.Vector3(0,-1,0);
+function ik(rig,side,target,pole){
+  const sh=side<0?rig.shR:rig.shL, el=side<0?rig.elR:rig.elL, D=rig.dims;
+  const S=sh.userData.rest, a=D.upper, b=D.fore+D.handR*0.55;
+  const d=target.clone().sub(S); let dist=d.length(); dist=Math.min(a+b-1e-4,Math.max(Math.abs(a-b)+1e-4,dist));
+  const dir=d.normalize();
+  const cosA=Math.min(1,Math.max(-1,(a*a+dist*dist-b*b)/(2*a*dist))), A=Math.acos(cosA);
+  const P=(pole||new THREE.Vector3(side*0.9,-0.4,-0.5)).clone();
+  const perp=P.sub(dir.clone().multiplyScalar(P.dot(dir))).normalize();
+  const e1=dir.clone().multiplyScalar(cosA).add(perp.multiplyScalar(Math.sin(A))).normalize();
+  const E=S.clone().add(e1.clone().multiplyScalar(a)), T2=S.clone().add(dir.clone().multiplyScalar(dist));
+  const e2=T2.sub(E).normalize();
+  const qU=new THREE.Quaternion().setFromUnitVectors(DOWN,e1);
+  const e2l=e2.applyQuaternion(qU.clone().invert());
+  sh.userData.tq.copy(qU); el.userData.tq.setFromUnitVectors(DOWN,e2l);
+}
+const V=(x,y,z)=>new THREE.Vector3(x,y,z);
+function animateHuman(R,m,t){
+  resetRig(R);
+  const D=R.dims, s=Math.sin, H=R.H;
+  if(R.phone) R.phone.visible=H.acc.includes('phone')||(m==='phone'&&!H.acc.includes('headset'));
+  const legs=(ph,amp,knee)=>{ rot(R.hipL,s(ph)*amp); rot(R.hipR,-s(ph)*amp); rot(R.kneeL,Math.max(0,s(ph+1.3))*knee); rot(R.kneeR,Math.max(0,s(ph+1.3+Math.PI))*knee); };
+  if(R.tailH) rot(R.tailH,s(t*2)*0.1,s(t*3)*0.4,0);
+  switch(m){
+    case 'idle': pos(R.hips,0,s(t*2)*D.T*0.004,0); rot(R.shL,0,0,s(t*2)*0.03); rot(R.shR,0,0,-s(t*2)*0.03); rot(R.neck,s(t*0.7)*0.04,s(t*0.5)*0.18,0); rot(R.torso,0,s(t*0.5)*0.04,0); break;
+    case 'walk': { const ph=t*7; legs(ph,0.55,0.8); rot(R.shL,-s(ph)*0.5); rot(R.shR,s(ph)*0.5); rot(R.elL,-0.25); rot(R.elR,-0.25);
+      pos(R.mover,0,Math.abs(s(ph))*D.T*0.015,0); rot(R.torso,0,s(ph)*0.08,0); rot(R.neck,0,-s(ph)*0.06,0); break; }
+    case 'run': { const ph=t*11; legs(ph,0.95,1.5); rot(R.shL,-s(ph)*0.9); rot(R.shR,s(ph)*0.9); rot(R.elL,-1.4); rot(R.elR,-1.4);
+      rot(R.torso,0.18,s(ph)*0.12,0); rot(R.neck,-0.12); pos(R.mover,0,Math.abs(s(ph))*D.T*0.05,0); break; }
+    case 'wave': ik(R,-1,V(-(D.tw+D.R*0.55)+s(t*8)*D.R*0.28,D.headY+D.R*0.35,D.R*0.35),V(-1,-0.6,-0.2)); rot(R.neck,0,-0.1,0.14); rot(R.shL,0,0,0.05); pos(R.hips,0,s(t*2)*D.T*0.004,0); break;
+    case 'phone':
+      ik(R,-1,V(-(D.R*1.0+D.handR*0.4),D.headY-D.R*0.08,D.R*0.12),V(-1,-0.8,0.2));
+      ik(R,1,V(D.tw*1.3,D.torsoLen*0.12,-D.tw*0.15),V(1,0,-0.6));
+      rot(R.neck,s(t*3)*0.05,0,0.16); rot(R.hips,0,0,s(t*0.8)*0.04); rot(R.hipL,0,0,0.05); break;
+    case 'think':
+      ik(R,-1,V(-D.R*0.12,D.headY-D.R*0.92,D.R*0.6),V(-1,-1,0.2));
+      ik(R,1,V(-D.tw*0.15,D.torsoLen*0.42,D.tw*1.05),V(1,-0.5,0.3));
+      rot(R.neck,-0.08+s(t*0.7)*0.04,0,0.18+s(t*0.5)*0.05); break;
+    case 'cheer': { const p=Math.abs(s(t*4));
+      for(const sd of [-1,1]) ik(R,sd,V(sd*(D.tw+D.R*0.3),D.headY+D.R*1.6+p*D.R*0.15,D.R*0.1),V(sd,0,-0.5));
+      pos(R.mover,0,p*D.T*0.08,0); rot(R.kneeL,(1-p)*0.5); rot(R.kneeR,(1-p)*0.5); rot(R.hipL,-(1-p)*0.25); rot(R.hipR,-(1-p)*0.25); pos(R.hips,0,-(1-p)*D.legLen*0.06,0); rot(R.neck,-0.15); break; }
+    case 'jump': { const cyc=1.2, p=(t%cyc)/cyc; let y=0,c=0;
+      if(p<0.25) c=s(p/0.25*Math.PI); else if(p<0.8) y=s((p-0.25)/0.55*Math.PI);
+      pos(R.mover,0,y*D.T*0.28,0); pos(R.hips,0,-c*D.legLen*0.18,0);
+      rot(R.hipL,-c*0.6-y*0.5); rot(R.hipR,-c*0.6-y*0.5); rot(R.kneeL,c*1.2+y*1.0); rot(R.kneeR,c*1.2+y*1.0);
+      rot(R.shL,y?-2.6*y:c*0.6,0,0.3); rot(R.shR,y?-2.6*y:c*0.6,0,-0.3); rot(R.torso,c*0.25); break; }
+    case 'bow': { const b=Math.max(0,s(t*1.5))**0.6;
+      rot(R.torso,0.65*b); rot(R.neck,0.25*b); rot(R.shL,-0.6*b,0,0.05); rot(R.shR,-0.6*b,0,-0.05); rot(R.hipL,-0.05*b); rot(R.hipR,-0.05*b); break; }
+    case 'dance': { const ph=t*6, a=s(ph);
+      rot(R.hips,0,0,a*0.12); rot(R.torso,0,0,-a*0.18); pos(R.mover,a*D.T*0.03,Math.abs(s(ph*2))*D.T*0.02,0);
+      ik(R,-1,a>0?V(-(D.tw+D.R*0.4),D.headY+D.R*1.2,D.R*0.2):V(-D.tw*1.3,D.torsoLen*0.2,D.tw*0.4),V(-1,0,-0.5));
+      ik(R,1,a<0?V(D.tw+D.R*0.4,D.headY+D.R*1.2,D.R*0.2):V(D.tw*1.3,D.torsoLen*0.2,D.tw*0.4),V(1,0,-0.5));
+      rot(R.hipL,a>0?-0.4:0,0,0.1); rot(R.kneeL,a>0?0.7:0); rot(R.hipR,a<0?-0.4:0,0,-0.1); rot(R.kneeR,a<0?0.7:0); rot(R.neck,0,0,a*0.2); break; }
+    case 'point': { const p=s(t*3)*0.03;
+      ik(R,-1,V(-D.tw*0.7,D.torsoLen*0.95+D.R*0.4,(D.upper+D.fore)*1.2+p),V(-1,-0.5,0)); ik(R,1,V(D.tw*1.3,D.torsoLen*0.12,-D.tw*0.15),V(1,0,-0.6));
+      rot(R.neck,-0.05,-0.2,0); rot(R.torso,0,-0.15,0); rot(R.hipR,-0.15); break; }
+    case 'surprise': { const p=(t%2.4)/2.4, j=p<0.25?s(p/0.25*Math.PI):0, sh=s(t*30)*0.02;
+      for(const sd of [-1,1]) ik(R,sd,V(sd*(D.tw+D.R*0.9),D.headY+D.R*0.25+sh*D.T,D.R*0.5),V(sd,-1,-0.3));
+      rot(R.torso,-0.15); rot(R.neck,-0.2); pos(R.mover,0,j*D.T*0.07,-j*D.T*0.02); rot(R.hipR,-0.2); rot(R.kneeR,0.3); break; }
+    case 'sad':
+      rot(R.neck,0.45,s(t*0.4)*0.1,0); rot(R.torso,0.18); rot(R.shL,-0.2,0,0.02); rot(R.shR,-0.2,0,-0.02); rot(R.elL,-0.1); rot(R.elR,-0.1);
+      pos(R.hips,0,-D.legLen*0.02+s(t*1.2)*D.T*0.003,0); rot(R.kneeL,0.1); rot(R.kneeR,0.1); break;
+  }
+  const blink=((t+0.7)%3.6)<0.13;
+  R.face.mat.map=blink?R.face.closed:R.face.open;
+}
+//#CORE-END
+
+/* =========================================================
+   レンダラ・シーン
+   ========================================================= */
+const $=s=>document.querySelector(s);
+const canvas=$('#c'), stage=$('#stage'), panel=$('#panel');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+
+// --- オフィス ---
+const scene=new THREE.Scene(); scene.background=new THREE.Color('#dfe9f2');
+const camera=new THREE.PerspectiveCamera(38,1,0.05,50);
+const officeHemi=new THREE.HemisphereLight(0xffffff,0xb8c4d4,1.7); scene.add(officeHemi);
+const sun=new THREE.DirectionalLight(0xffffff,1.8); sun.position.set(1.5,4,3); sun.castShadow=true; sun.shadow.mapSize.set(1024,1024);
+{const c=sun.shadow.camera; c.left=-2.5;c.right=2.5;c.top=2.5;c.bottom=-2.5;c.near=0.1;c.far=12;} scene.add(sun);
+function box(w,h,d,c,x,y,z,parent=scene){ const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c,{roughness:0.8})); m.position.set(x,y,z); m.castShadow=true; m.receiveShadow=true; parent.add(m); return m; }
+function textTex(lines,w=512,h=128,bg='#ff8a3d',fg='#fff',size=48){ const cv=document.createElement('canvas'); cv.width=w; cv.height=h; const g=cv.getContext('2d');
+  g.fillStyle=bg; g.fillRect(0,0,w,h); g.fillStyle=fg; g.textAlign='center'; g.textBaseline='middle';
+  lines.forEach((l,i)=>{ g.font=`bold ${i?size*0.6:size}px sans-serif`; g.fillText(l,w/2,h/2+(i-(lines.length-1)/2)*size*1.05); });
+  const t=new THREE.CanvasTexture(cv); t.colorSpace=THREE.SRGBColorSpace; return t; }
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(12,12),mat('#c9d3dc',{roughness:1})); floor.rotation.x=-Math.PI/2; floor.receiveShadow=true; scene.add(floor);
+const wall=new THREE.Mesh(new THREE.PlaneGeometry(12,5),mat('#f2f5f9',{roughness:1})); wall.position.set(0,2.5,-1.1); wall.receiveShadow=true; scene.add(wall);
+const sign=new THREE.Mesh(new THREE.PlaneGeometry(1.6,0.32),new THREE.MeshBasicMaterial({map:textTex(['🐾 わんわんコールセンター'],640,128,'#ff8a3d','#fff',52)})); sign.position.set(0.35,2.0,-1.09); scene.add(sign);
+// 大型モニター（ビデオ通話）
+const rt=new THREE.WebGLRenderTarget(800,600,{samples:4});
+box(1.62,1.25,0.06,'#2b2f3a',0.38,1.15,-0.62);
+box(0.08,0.55,0.08,'#2b2f3a',0.38,0.3,-0.66); box(0.5,0.04,0.3,'#2b2f3a',0.38,0.02,-0.66);
+const screenMat=new THREE.MeshBasicMaterial({map:rt.texture});
+const standbyTex=textTex(['📞 待機中','お電話をお待ちしています'],800,600,'#2f3b55','#cfe0ff',80); const standbyMat=new THREE.MeshBasicMaterial({map:standbyTex});
+const screen=new THREE.Mesh(new THREE.PlaneGeometry(1.5,1.125),screenMat); screen.position.set(0.38,1.15,-0.585); scene.add(screen);
+// デスク
+const desk=new THREE.Group(); desk.position.set(-0.62,0,0.62); scene.add(desk);
+box(0.95,0.05,0.42,'#e9d6b8',0,0.48,0,desk); box(0.05,0.46,0.38,'#c9b08a',-0.42,0.23,0,desk); box(0.05,0.46,0.38,'#c9b08a',0.42,0.23,0,desk);
+box(0.9,0.3,0.02,'#c9b08a',0,0.3,0.19,desk);
+box(0.36,0.24,0.02,'#2b2f3a',0.12,0.66,-0.08,desk).rotation.y=-0.25; box(0.3,0.015,0.12,'#ffffff',0.08,0.51,0.06,desk);
+const mug=new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.03,0.08,14),mat('#ff8a3d')); mug.position.set(-0.3,0.545,0.04); desk.add(mug);
+const plant=new THREE.Group(); plant.position.set(-1.35,0,-0.6); scene.add(plant);
+box(0.22,0.26,0.22,'#d9b28a',0,0.13,0,plant); const lv=new THREE.Mesh(new THREE.SphereGeometry(0.22,14,10),mat('#6cc36a')); lv.position.y=0.45; lv.castShadow=true; plant.add(lv);
+// 改装・季節の飾り
+const decor={plant:new THREE.Group(),booth:new THREE.Group(),halloween:new THREE.Group()}; Object.values(decor).forEach(g=>{ g.visible=false; scene.add(g); });
+[[1.3,-0.8],[-1.45,0.3]].forEach(([x,z])=>{ const g=new THREE.Group(); g.position.set(x,0,z); decor.plant.add(g); box(0.2,0.24,0.2,'#e8d6c0',0,0.12,0,g); const l=new THREE.Mesh(new THREE.ConeGeometry(0.2,0.6,10),mat('#4fae5b')); l.position.y=0.52; l.castShadow=true; g.add(l); });
+box(0.05,0.9,0.7,'#b9c6d6',-0.72,0.45,-0.6,decor.booth); box(0.6,0.04,0.35,'#e9d6b8',-1.1,0.45,-0.5,decor.booth);
+const cow=buildHuman({heads:3,height:0.7,hair:'short',hairC:'#2b211c',eyes:'round',mouth:'smile',top:'jacket',topC:'#6cc3a0',accC:'#ffffff',bottom:'pants',botC:'#3d4a6b',acc:['headset']}); cow.root.position.set(-1.1,0,-0.85); cow.root.rotation.y=0.5; decor.booth.add(cow.root);
+[[-0.35,0.505,0.6,0.06],[-1.05,0,0.6,0.12],[1.15,0,0.35,0.15]].forEach(([x,y,z,r])=>{ const pk=new THREE.Mesh(new THREE.SphereGeometry(r,16,12),mat('#ff8a1e')); pk.scale.y=0.8; pk.position.set(x,y+r*0.8,z); pk.castShadow=true; decor.halloween.add(pk); const st=new THREE.Mesh(new THREE.CylinderGeometry(r*0.12,r*0.12,r*0.4,6),mat('#4a7a2a')); st.position.set(x,y+r*1.7,z); decor.halloween.add(st); });
+for(let i=0;i<4;i++){ const b=emojiSprite('🦇',0.22); b.position.set(-1.2+i*0.9,1.65+(i%2)*0.25,-1.05); decor.halloween.add(b); }
+const lamp=new THREE.PointLight(0xffc27a,0,3); lamp.position.set(-0.4,0.95,0.75); scene.add(lamp);
+function setNight(on){ G.night=on; scene.background.set(on?'#1c2440':'#dfe9f2'); wall.material=mat(on?'#3a4260':'#f2f5f9',{roughness:1}); lamp.intensity=on?3:0; sun.intensity=on?0.5:1.8; officeHemi.intensity=on?0.7:1.7; hud(); }
+// オペレーター
+const OP_H={heads:3,height:0.76,hair:'ponytail',hairC:'#4a3426',eyes:'sparkle',eyeC:'#3aa8a0',mouth:'smile',brows:'normal',top:'jacket',topC:'#3d6fb0',accC:'#ffffff',bottom:'skirt',botC:'#2c3e66',shoes:'sneaker',shoeC:'#ffffff',sockC:'#ffffff',acc:['headset']};
+let op=buildHuman(OP_H); op.root.position.set(-0.62,0,0.3); op.root.rotation.y=0.3; scene.add(op.root);
+function rebuildOp(){ scene.remove(op.root); disposeTree(op.root); op=buildHuman(OP_H); op.root.position.set(-0.62,0,0.3); op.root.rotation.y=0.3; scene.add(op.root); }
+let opMotion='idle', opBase='idle', opTimer=null;
+function setOp(m,dur){ opMotion=m; clearTimeout(opTimer); if(dur) opTimer=setTimeout(()=>{ opMotion=opBase; },dur); }
+
+// --- 犬の部屋（モニターの向こう側） ---
+const dogScene=new THREE.Scene();
+const dogCam=new THREE.PerspectiveCamera(40,4/3,0.02,60);
+const dHemi=new THREE.HemisphereLight(0xffffff,0xc9a878,1.6); dogScene.add(dHemi);
+const dSun=new THREE.DirectionalLight(0xffffff,2); dSun.position.set(2,5,3); dSun.castShadow=true; dSun.shadow.mapSize.set(1024,1024);
+{const c=dSun.shadow.camera; c.left=-3;c.right=3;c.top=3;c.bottom=-3;c.near=0.1;c.far=15;} dogScene.add(dSun);
+let room=null, roomType='home';
+function buildRoom(type){
+  roomType=type; if(room){ dogScene.remove(room); disposeTree(room); } room=new THREE.Group(); dogScene.add(room);
+  const night=type==='night', street=type==='street';
+  dogScene.background=new THREE.Color(street?'#bfe3ff':night?'#1b2140':'#f3e6cf');
+  dHemi.intensity=night?0.55:1.6; dSun.intensity=night?0.5:2; dHemi.color.set(night?'#9fb0ff':'#ffffff');
+  const fl=new THREE.Mesh(new THREE.PlaneGeometry(14,14),mat(street?'#9a9aa0':night?'#6b5a48':'#c89f72',{roughness:1})); fl.rotation.x=-Math.PI/2; fl.receiveShadow=true; room.add(fl);
+  if(street){
+    for(let i=-3;i<=3;i++) box(0.5,0.005,0.08,'#ffffff',i*1.0,0.003,0.9,room);
+    const cols=['#f2c58f','#e7a1a1','#a9c7e8','#c6e0a8','#f0e2b6','#d7c1ea'];
+    for(let i=0;i<7;i++){ const h=1.2+((i*37)%10)/6; const b=box(1.1,h,0.8,cols[i%6],-3.3+i*1.1,h/2,-2.2,room); for(let k=0;k<3;k++) box(0.22,0.26,0.02,'#5d7fa8',-3.5+i*1.1+k*0.25,h*0.6,-1.79,room); }
+    const tr=new THREE.Group(); tr.position.set(-1.1,0,-0.8); room.add(tr); box(0.12,0.9,0.12,'#7a5236',0,0.45,0,tr); const cn=new THREE.Mesh(new THREE.SphereGeometry(0.55,14,10),mat('#5fb35a')); cn.position.y=1.2; cn.castShadow=true; tr.add(cn);
+    box(0.05,1.5,0.05,'#4a4f5a',1.3,0.75,-0.7,room); box(0.25,0.08,0.12,'#ffe9a6',1.3,1.5,-0.7,room);
+  } else {
+    const w=new THREE.Mesh(new THREE.PlaneGeometry(14,6),mat(night?'#3b3a52':'#f3e6cf',{roughness:1})); w.position.set(0,3,-1.4); room.add(w);
+    box(1.6,0.34,0.62,'#6c8fb8',-0.55,0.17,-0.95,room); box(1.6,0.5,0.18,'#5f80a8',-0.55,0.5,-1.22,room);
+    box(0.18,0.46,0.62,'#5f80a8',-1.34,0.23,-0.95,room); box(0.18,0.46,0.62,'#5f80a8',0.24,0.23,-0.95,room);
+    box(0.9,0.7,0.03,'#ffffff',1.05,1.25,-1.39,room); box(0.8,0.6,0.02,night?'#11183a':'#a9dcff',1.05,1.25,-1.37,room);
+    const rug=new THREE.Mesh(new THREE.CircleGeometry(0.75,32),mat('#e9b3a6',{roughness:1})); rug.rotation.x=-Math.PI/2; rug.position.set(0.25,0.004,0.2); rug.receiveShadow=true; room.add(rug);
+    box(0.3,0.35,0.3,'#c98a4b',1.2,0.175,-0.9,room);
+  }
+}
+let callDog=null, extras=[], props=[];
+const camGoal={pos:new THREE.Vector3(1,0.6,2),tgt:new THREE.Vector3(0,0.3,0)}, camTgt=new THREE.Vector3(0,0.3,0);
+function setCallDog(breedP){
+  clearExtras();
+  if(callDog){ dogScene.remove(callDog.root); disposeTree(callDog.root); }
+  callDog=buildDog(breedP); callDog.root.scale.setScalar(VOX*callDog.P.s); callDog.root.rotation.y=0.35;
+  callDog.collar.visible=true; dogScene.add(callDog.root); dogMotion='idle';
+  if(G.upg.halloween){ const P=callDog.P, hg=new THREE.Group(), hm=mat('#3a2b55');
+    const cone=new THREE.Mesh(new THREE.ConeGeometry(P.hw*0.42,P.hh*1.1,16),hm); cone.position.y=P.hh*0.55; cone.rotation.z=0.18; hg.add(cone);
+    const brim=new THREE.Mesh(new THREE.CylinderGeometry(P.hw*0.75,P.hw*0.75,0.25,20),hm); hg.add(brim);
+    const band=new THREE.Mesh(new THREE.CylinderGeometry(P.hw*0.43,P.hw*0.45,0.6,16),mat('#ff8a1e')); band.position.y=0.4; hg.add(band);
+    hg.position.set(0,P.hh+0.1,P.hd/2-1); callDog.head.add(hg); }
+  frameDogCam(true);
+}
+function dogDims(){ const s=callDog.P.s; return {h:callDog.height*s, l:callDog.len*s}; }
+function frameDogCam(snap){
+  const {h,l}=dogDims(); let minX=-l*0.6,maxX=l*0.6,top=h;
+  for(const e of extras){ minX=Math.min(minX,e.x-e.w); maxX=Math.max(maxX,e.x+e.w); top=Math.max(top,e.h); }
+  const cx=(minX+maxX)/2, size=Math.max(top*1.3,(maxX-minX)*1.1/(4/3),0.45);
+  const dist=size/(2*Math.tan(20*Math.PI/180))*1.05;
+  camGoal.tgt.set(cx,top*0.45,0); camGoal.pos.set(cx+dist*0.28,top*0.5+dist*0.16,dist);
+  if(snap){ dogCam.position.copy(camGoal.pos); camTgt.copy(camGoal.tgt); }
+}
+function clearExtras(){ for(const p of props){ dogScene.remove(p.obj); disposeTree(p.obj); } props=[]; extras=[]; }
+
+// スタッフ・小道具
+const STAFF=[
+  {id:'take',name:'タケシ',av:'💪',skill:'力持ち',desc:'重い家具もヒョイっと持ち上げる',H:{heads:3.4,hair:'spiky',hairC:'#2b211c',eyes:'round',mouth:'grin',top:'tshirt',topC:'#ff8a3d',bottom:'cargo',botC:'#4a4650',shoes:'boots',shoeC:'#6e4a33',build:1.3,acc:[]}},
+  {id:'mina',name:'ミナ',av:'👟',skill:'足が速い',desc:'街のどこへでも3分で到着',H:{heads:3.6,hair:'ponytail',hairC:'#f08cc0',eyes:'sharp',eyeC:'#c0446a',mouth:'smile',hat:'cap',hatC:'#ffffff',top:'tank',topC:'#f2ede4',bottom:'shorts',botC:'#4aa3df',shoes:'sneaker',shoeC:'#ffffff',acc:['headphones']}},
+  {id:'yui',name:'ユイ',av:'🐾',skill:'動物の扱い',desc:'どんな犬ともすぐ仲良し',H:{heads:2.8,hair:'bob',hairC:'#b07a45',eyes:'smile',mouth:'cat',hat:'hood_cat',hatC:'#e3d3b8',top:'hoodie',topC:'#a3d977',accC:'#e3d3b8',bottom:'skirt',botC:'#6cc3a0',shoes:'sneaker',shoeC:'#f6b6c8',acc:['tail']}},
+  {id:'ken',name:'ケン',av:'🧰',skill:'なんでも屋',desc:'どんな出動もそこそこ成功（雇用が必要）',hire:1,H:{heads:3.2,hair:'curly',hairC:'#7a4e2d',eyes:'dot',mouth:'grin',hat:'beanie',hatC:'#e84d5b',top:'sweater',topC:'#f7d75a',bottom:'cargo',botC:'#6e4a33',shoes:'boots',shoeC:'#4a3426',acc:['backpack']}},
+];
+function staffArrive(id){
+  return new Promise(res=>{
+    const S=STAFF.find(s=>s.id===id), r=buildHuman(S.H); const {l}=dogDims();
+    const goal=l*0.6+0.32+extras.filter(e=>e.kind==='staff').length*0.5;
+    r.root.position.set(goal+2.5,0,0.25); r.root.rotation.y=-Math.PI/2; dogScene.add(r.root);
+    const p={obj:r.root,rig:r,kind:'staff',goal,m:'run',t0:time,done:res}; props.push(p);
+    extras.push({x:goal,w:0.35,h:r.height*1.05,kind:'staff'}); frameDogCam();
+  });
+}
+const ITEMS=[['ball','🎾','新しいボール'],['hand','🦾','マジックハンド'],['cape','🦸','雷よけマント'],['plush','🧸','ぬいぐるみ'],['duck','🐤','アヒルのおもちゃ'],['brush','🪥','チキン味歯ブラシ'],['cake','🎂','わんわんケーキ'],['snack','🍪','おためしおやつ'],['gum','🦴','骨ガム'],['bandana','🧣','おそろいバンダナ'],['flower','💐','お花'],['light','🔦','ナイトライト'],['veggie','🥕','野菜スティック'],['gift','🎁','お礼のプレゼント',1]];
+function emojiSprite(e,size){ const cv=document.createElement('canvas'); cv.width=cv.height=128; const g=cv.getContext('2d'); g.font='100px sans-serif'; g.textAlign='center'; g.textBaseline='middle'; g.fillText(e,64,70);
+  const t=new THREE.CanvasTexture(cv); t.colorSpace=THREE.SRGBColorSpace; const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t})); s.scale.set(size,size,1); return s; }
+function dropItem(id){
+  return new Promise(res=>{
+    const it=ITEMS.find(i=>i[0]===id); const {h,l}=dogDims(); const sz=Math.max(0.16,h*0.4);
+    const g=new THREE.Group(); const bx=new THREE.Mesh(new THREE.BoxGeometry(sz,sz*0.8,sz),mat('#c99a5e')); bx.castShadow=true; g.add(bx);
+    const tape=new THREE.Mesh(new THREE.BoxGeometry(sz*1.01,sz*0.12,sz*1.01),mat('#e9d6b0')); g.add(tape);
+    const x=l*0.55+sz*0.6; g.position.set(x,h*2+0.6,0.35); dogScene.add(g);
+    props.push({obj:g,kind:'box',y:g.position.y,vy:0,ground:sz*0.4,emoji:it[1],sz,t0:time,done:res});
+    extras.push({x,w:sz,h:h,kind:'box'}); frameDogCam();
+  });
+}
+function addSenior(){
+  const r=buildDog(BREEDS[25][1]); r.root.scale.setScalar(VOX*r.P.s); const {l}=dogDims(); const x=-l*0.6-0.75;
+  r.root.position.set(x,0,-0.25); r.root.rotation.y=0.6; dogScene.add(r.root); props.push({obj:r.root,rig:r,kind:'senior'});
+  extras.push({x,w:0.6,h:r.height*r.P.s,kind:'senior'}); frameDogCam(); return r;
+}
+let flashT=0;
+function thunderTick(dt){
+  if(roomType!=='night'||!C||!C.sc.thunder) return;
+  flashT-=dt; if(flashT<=0){ flashT=3.5+Math.random()*3; flash=0.25; rumble(); if(C&&C.emo<60) setDog('shake',1600); }
+}
+let flash=0;
+
+// --- サイズ ---
+function resize(){ const w=stage.clientWidth,h=stage.clientHeight; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix();
+  const d=Math.max(2.9,3.3/camera.aspect); camera.position.set(0.0,1.05,d); camera.lookAt(0.02,0.82,0); }
+new ResizeObserver(resize).observe(stage); resize();
+
+/* =========================================================
+   サウンド（どうぶつ語ボイス）
+   ========================================================= */
+let AC=null, muted=false;
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC&&AC.state==='suspended') AC.resume(); return AC; }
+function tone(f,d,type='triangle',g=0.04,when=0){ if(muted||!AC) return; const t=AC.currentTime+when; const o=AC.createOscillator(), gn=AC.createGain(); o.type=type; o.frequency.setValueAtTime(f,t);
+  gn.gain.setValueAtTime(g,t); gn.gain.exponentialRampToValueAtTime(0.0001,t+d); o.connect(gn).connect(AC.destination); o.start(t); o.stop(t+d+0.03); }
+function blip(p){ tone(p*(0.85+Math.random()*0.45),0.06,'triangle',0.05); }
+function rumble(){ if(muted||!AC) return; const n=AC.sampleRate*1.4, b=AC.createBuffer(1,n,AC.sampleRate), d=b.getChannelData(0); for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/n,2);
+  const s=AC.createBufferSource(); s.buffer=b; const f=AC.createBiquadFilter(); f.type='lowpass'; f.frequency.value=180; const g=AC.createGain(); g.gain.value=0.6; s.connect(f).connect(g).connect(AC.destination); s.start(); }
+let ringIv=null;
+function ringStart(){ ringStop(); const r=()=>{ for(let k=0;k<2;k++){ tone(1046,0.09,'square',0.025,k*0.22); tone(784,0.09,'square',0.025,k*0.22+0.1);} }; r(); ringIv=setInterval(r,1500); }
+function ringStop(){ clearInterval(ringIv); ringIv=null; }
+function holdMusic(sec){ const notes=[523,659,784,659,587,698,880,698,523,659,784,1046]; const step=sec/notes.length; notes.forEach((f,i)=>tone(f,step*0.9,'sine',0.05,i*step)); }
+function chime(ok){ if(ok){ tone(784,0.12,'sine',0.06); tone(1046,0.18,'sine',0.06,0.12); } else { tone(330,0.18,'sawtooth',0.03); tone(262,0.25,'sawtooth',0.03,0.15); } }
+
+/* =========================================================
+   ゲーム状態
+   ========================================================= */
+const G={day:1,hour:9,coins:0,stars:[],missed:0,story:0,endless:false,karte:[],queue:[],rep:50,combo:0,maxCombo:0,helps:3,upg:{},ach:new Set(),stamps:new Set(),usedGames:new Set(),reviews:[],night:false,nightCalls:0,thanks:0,bossWin:0};
+let C=null, dogMotion='idle', dogMotionTimer=null, time=0;
+const NAMES=['ポチ','ココ','モカ','ラテ','きなこ','あずき','マロン','ハル','ソラ','レオ','ナナ','チョコ','むぎ','こてつ','さくら','ルナ','テツ','ぷりん','だいず','ゴン'];
+const CH=(t,r,f={})=>Object.assign({type:'choice',t,r},f);
+const TL=(game,label,r,p={},f={})=>Object.assign({type:'game',game,label,r,p},f);
+
+/* ---------- ストーリー依頼（1日目） ---------- */
+const STORY=[
+ {breed:1,name:'こむぎ',room:'home',emo:40,topic:'ボールがソファの下に',
+  steps:[
+   {say:['ワン！ワンワン…クゥン','もしもし？ボールがソファの下に入っちゃって出てこないの。べ、別に泣いてないし！'],motion:'sad',hint:'まずは会話で気持ちに寄り添おう',
+    actions:[CH('それは大変でしたね！一緒に考えましょう',{emo:15,say:['ワフッ','ほんと？…ありがとワン'],motion:'happy',next:1}),
+             CH('ボールなんて諦めましょう',{emo:-25,say:['ガウッ！','ひどいワン！！大事なボールなの！'],motion:'bark',next:1})]},
+   {say:['ワン？','どうしたらいいワン？'],hint:'道具ボタン（発送・出動）で解決できるよ',tip:'マジックハンドを発送するか、力持ちのタケシを出動させよう',
+    actions:[CH('鼻でグイグイ押してみて！',{emo:-8,say:['フンフン…','…鼻が届かないワン'],motion:'dig'},{once:1}),
+             TL('ship','📦 アイテム発送',r=>r==='hand'?{emo:30,say:['ワンワン！','マジックハンドで取れた！ボクのボールだワン！'],motion:'jump',end:1}:r==='ball'?{emo:15,say:['ワン','新しいのもいいけど…ちょっと複雑だワン'],motion:'happy',end:1}:{emo:-10,say:['クゥ？','これじゃボールは取れないワン…'],motion:'sad'}),
+             TL('dispatch','🏃 スタッフ出動',r=>r==='take'?{emo:30,say:['ワォーン！','ソファを持ち上げてくれた！すごいワン！'],motion:'jump',end:1}:{emo:4,say:['クゥ…','ソファが重くて持ち上がらないみたいワン…'],motion:'sad'})]}]},
+ {breed:13,name:'ルル',room:'night',emo:15,base:'shake',thunder:1,topic:'雷がこわい',
+  steps:[
+   {say:['キャンキャンキャン！！ブルブル…','（犬語が早すぎて翻訳できません）'],motion:'shake',hint:'しぐさをヒントに犬語を翻訳しよう',tip:'しっぽが丸まって震えてる…雷がこわいのかも',
+    actions:[TL('translate','🐾 犬語を翻訳する',ok=>ok?{emo:12,op:'カミナリがこわいんですね。大丈夫ですよ',say:['クゥ…','そうなの…わかってくれた…'],motion:'sad',next:1}:{emo:-8,op:'お腹がすいたんですね？',say:['キャン！','ち、ちがうの！カミナリがこわいの！'],motion:'bark',next:1},
+      {bark:'キャンキャン！ブルブル…クゥ〜ン',hint:'しっぽ：股の間に丸まっている／体：ブルブル震えている／窓の外：ピカッ！',opts:[['雷がこわい',1],['おなかがすいた',0],['遊んでほしい',0]]})]},
+   {say:['クゥン…','ゴロゴロって鳴るたび、心臓がバクバクするの…'],hint:'リズムに合わせてなでて落ち着かせよう',tip:'なでなでリズムで落ち着かせよう',
+    actions:[TL('rhythm','🎵 なでなでリズム',ok=>ok?{emo:25,say:['ハフ…','ふぅ…ちょっと落ち着いたの'],motion:'sit',next:2}:{emo:4,say:['キャン','もうちょっとゆっくりなでて…'],motion:'shake'}),
+             CH('深呼吸しましょう。吸って〜、吐いて〜',{emo:8,say:['スー…ハー…','す〜…は〜…'],motion:'sit'},{once:1})]},
+   {say:['クゥ？','でもまた鳴ったらどうしよう…'],tip:'雷よけマントを発送しよう',
+    actions:[TL('ship','📦 アイテム発送',r=>r==='cape'?{emo:30,say:['ワン！','マントにくるまると全然こわくない！ありがとうなの！'],motion:'happy',end:1}:r==='plush'?{emo:18,say:['クゥン','ぬいぐるみをギュッてするの…'],motion:'down',end:1}:{emo:-10,say:['キャン？','これは…ちがうの…'],motion:'shake'}),
+             CH('雷はすぐ通り過ぎますよ',{emo:5,say:['クゥ','ほんと…？'],motion:'sit'},{once:1})]}]},
+ {breed:18,name:'ちくわ',room:'street',emo:25,topic:'散歩中に迷子',
+  steps:[
+   {say:['クゥーン…','ここどこッスか…散歩中にリードが外れて走ってたら、わかんなくなったッス'],motion:'sniff',
+    actions:[CH('落ち着いて。まわりに何が見えますか？',{emo:10,say:['フンフン','えっと、においと音ならわかるッス！'],motion:'sniff',next:1}),
+             CH('ご自宅の住所を教えてください',{emo:-6,say:['ワフ？','じゅうしょ…？犬なんでわかんないッス'],motion:'sad'},{once:1})]},
+   {say:['フンフン','パンの焼けるにおい！カンカンって踏切の音！あと大きな木の下にいるッス'],hint:'ヒントから地図で居場所を当てよう',tip:'踏切の上・パン屋の左・木の右のマスだよ',
+    actions:[TL('map','🗺️ 地図で居場所を特定',ok=>ok?{emo:15,op:'見つけました！パン屋さんと踏切のそばの木ですね',say:['ワン！','そこッス！たぶん！'],motion:'happy',next:2}:{emo:-5,op:'時間がかかりましたが…ここですね！',say:['クゥ','早く来てほしいッス…'],motion:'sad',next:2})]},
+   {say:['ワフ','迎えに来てくれるッスか？'],tip:'足が速いミナを出動させよう',
+    actions:[TL('dispatch','🏃 スタッフ出動',r=>r==='mina'?{emo:35,say:['ワンワン！','はやっ！もう来たッス！'],motion:'jump',end:1}:r==='yui'?{emo:25,say:['ワン','やさしく抱っこしてくれたッス〜'],motion:'happy',end:1}:{emo:10,say:['…','のんびり来たッス…でも助かったッス'],motion:'idle',end:1}),
+             TL('transfer','☎️ 部署へ転送',r=>r==='lost'?{emo:15,say:['ワン','迷子捜索課の人が向かってくれるって！'],motion:'happy',end:1}:{emo:-12,say:['クゥン','たらい回しッス…'],motion:'sad'})]}]},
+ {breed:7,name:'ハニー',room:'home',emo:50,topic:'飼い主が元気ない',
+  steps:[
+   {say:['ワフ〜','ねえねえ、聞いてくれる？最近ご主人がずっと元気ないんだよぉ'],motion:'sad',
+    actions:[CH('くわしく聞かせてください',{emo:10,say:['クゥン','お仕事から帰ってきても、ため息ばっかりなんだぁ'],motion:'sit',next:1}),
+             CH('それは飼い主さんの問題ですね',{emo:-15,say:['…','そっかぁ…でもボク心配なんだよぉ'],motion:'sad',next:1})]},
+   {say:['ワフ？','ボクにできること、あるかなぁ？'],hint:'先輩犬に聞いてみるのもアリ',tip:'三者通話で先輩犬ゲンさんに相談しよう',
+    actions:[TL('conference','👥 三者通話（先輩犬に相談）',()=>({emo:20,say:['ワフッ','ゲンさんありがとう！そばにいてあげればいいんだね！'],motion:'happy',next:2})),
+             TL('manual','📖 マニュアル検索',ok=>ok?{emo:12,op:'マニュアルによると「そっと寄り添う」のが一番だそうです',say:['ワフ','寄り添う…やってみるよぉ'],motion:'sit',next:2}:{emo:-5,op:'…該当ページが見つかりません',say:['クゥ？','だいじょうぶぅ？'],motion:'idle'},{answer:'元気がない'}),
+             CH('大声で吠えて元気づけましょう',{emo:-10,say:['ワフ…','ご近所さんに怒られちゃうよぉ'],motion:'sad'},{once:1})]},
+   {say:['ワン！','今日からずっとそばにいるよぉ！'],
+    actions:[CH('お気に入りのおもちゃも持っていってあげて',{emo:15,say:['ワォン！','いいね！一緒に遊んだら元気になるかもぉ'],motion:'jump',end:1}),
+             CH('きっと気持ちは伝わりますよ',{emo:10,say:['ワフ〜','うん！ありがとう〜'],motion:'happy',end:1})]}]},
+ {breed:6,name:'モモ',room:'home',emo:35,base:'bark',topic:'おやつ通販が届かない',
+  steps:[
+   {say:['ワンワン！','ちょっと！通販で頼んだ骨ガムが3日も届かないんだもん！'],motion:'bark',hint:'担当の部署はどこ？',tip:'おやつ配送課へ転送しよう',
+    actions:[CH('ご注文番号をお願いします',{emo:-5,say:['ワン？','えっと…ワン・ワン・ワン…番号なんて覚えてないもん！'],motion:'bark'},{once:1}),
+             TL('transfer','☎️ 部署へ転送',r=>r==='snack'?{emo:20,op:'おやつ配送課に確認しました。明日の朝お届けです！',say:['ワン','明日かぁ…'],motion:'sit',next:1}:{emo:-15,op:'（…違う部署だった）',say:['ガウ！','違う部署に回されたもん！'],motion:'bark'}),
+             TL('manual','📖 マニュアル検索',ok=>ok?{emo:6,op:'配送の遅れは「おやつ配送課」の担当ですね',say:['ワン','早くしてほしいもん'],motion:'idle'}:{emo:-5,op:'…該当ページが見つかりません',say:['ガウ','まだぁ？'],motion:'bark'},{answer:'おやつ'},{once:1})]},
+   {say:['クゥ〜','でも今食べたいもん…'],tip:'お詫びにおためしおやつを発送しよう',
+    actions:[TL('ship','📦 お詫びの品を発送',r=>r==='snack'?{emo:30,say:['ワンワン！','おためしおやつ！おいしいもん！許すもん！'],motion:'happy',end:1}:r==='gum'?{emo:25,say:['ワン！','骨ガムが先に届いたもん！'],motion:'jump',end:1}:{emo:-5,say:['…','食べられないもん'],motion:'sad'}),
+             CH('明日まで待ちましょう',{emo:3,say:['クゥ','…わかったもん'],motion:'sad',end:1})]}]},
+ {breed:23,name:'ジーク',room:'home',emo:5,base:'bark',boss:1,topic:'【ボス】散歩代行へのクレーム',
+  steps:[
+   {say:['ガルルル…！','おたくの散歩代行、15分も遅れたぞ！責任者を出せ！'],motion:'bark',hint:'クレーム対応は「言う順番」が大事！',tip:'謝罪 → 共感 → 提案 の順で話そう',
+    actions:[CH('責任者は今おりません',{emo:-15,say:['ガウガウ！','なんだと！？'],motion:'bark'},{once:1}),
+             TL('order','🙇 お詫びトークを組み立てる',n=>n===3?{emo:60,say:['…フン','…わかればいい。次も頼んだぞ'],motion:'sit',end:1}:n>=1?{emo:25,say:['グルル','…まあ、いいだろう'],motion:'idle',end:1}:{emo:-10,say:['ガウ！','話にならん！'],motion:'bark'},
+               {phrases:[['大変申し訳ございませんでした','謝罪'],['お散歩、楽しみにされていたんですよね','共感'],['次回は無料で30分延長いたします','提案']]}),
+             TL('transfer','☎️ 部署へ転送',r=>r==='claim'?{emo:20,op:'お客様相談課におつなぎしました',say:['グルル','…最初からそうしろ'],motion:'idle',end:1}:{emo:-15,say:['ガウ！','たらい回しにする気か！'],motion:'bark'})]}]},
+];
+/* ---------- ランダム依頼（エンドレス・待ち列） ---------- */
+const RANDOM_T=[
+ {topic:'お風呂がイヤ',steps:[{say:['クゥ〜ン','お風呂の時間なんだけど、イヤでイヤで…助けてワン'],motion:'sad',
+   actions:[CH('お風呂は気持ちいいですよ',{emo:5,say:['クゥ','…そうかなぁ'],motion:'sad'},{once:1}),
+     TL('ship','📦 アイテム発送',r=>r==='duck'?{emo:40,say:['ワン！','アヒルさんと一緒なら入れるワン！'],motion:'happy',end:1}:{emo:-8,say:['クゥ？','これはお風呂と関係ないワン'],motion:'sad'})]}]},
+ {topic:'歯みがきがキライ',steps:[{say:['ガウ…','歯みがき、ミントの味がイヤなんだワン！'],motion:'bark',
+   actions:[CH('歯は大事ですよ！',{emo:-3,say:['ワン','知ってるけどさぁ'],motion:'idle'},{once:1}),
+     TL('ship','📦 アイテム発送',r=>r==='brush'?{emo:40,say:['ワンワン！','チキン味！？毎日みがくワン！'],motion:'jump',end:1}:{emo:-8,say:['…','歯みがきと関係ないワン'],motion:'sad'})]}]},
+ {topic:'散歩に行けない',steps:[{say:['ワンワン！','ご主人が忙しくて、ずっと散歩に行けてないんだワン！'],motion:'bark',
+   actions:[TL('dispatch','🏃 スタッフ出動',r=>({emo:r==='yui'?40:r==='mina'?28:15,say:['ワン！','お散歩だワン！'],motion:'happy',end:1})),
+     TL('transfer','☎️ 部署へ転送',r=>r==='walk'?{emo:28,say:['ワン','お散歩課が来てくれるって！'],motion:'happy',end:1}:{emo:-12,say:['クゥン','ちがう部署ワン…'],motion:'sad'})]}]},
+ {topic:'誕生日パーティー',steps:[{say:['ワン♪','明日ボクの誕生日なの！パーティーしたいワン！'],motion:'happy',
+   actions:[TL('ship','📦 アイテム発送',r=>r==='cake'?{emo:40,say:['ワォーン！','わんわんケーキ！最高の誕生日ワン！'],motion:'jump',end:1}:{emo:5,say:['ワン','うれしいけど…ケーキがほしいワン'],motion:'idle'}),
+     TL('dispatch','🏃 スタッフ出動',()=>({emo:22,say:['ワン！','お祝いに来てくれたワン！'],motion:'spin',end:1}))]}]},
+
+ {topic:'新入りの猫',steps:[
+   {say:['ワフ…','新しく猫が家に来たワン。シャーって言われるけど、仲良くなりたいワン'],motion:'sad',tip:'距離をとって、においを覚えてもらおう',
+    actions:[CH('まずは距離をとって、においを覚えてもらいましょう',{emo:15,say:['ワン','ゆっくり…がんばるワン'],motion:'sit',next:1}),
+             CH('吠えて上下関係をわからせましょう',{emo:-15,say:['ワフ…','もっと嫌われちゃうワン…'],motion:'sad',next:1})]},
+   {say:['ワン？','何かきっかけがほしいワン'],tip:'おそろいバンダナを発送しよう',
+    actions:[TL('ship','📦 アイテム発送',r=>r==='bandana'?{emo:35,say:['ワンワン！','おそろいのバンダナ！猫ちゃんも気に入ったみたいワン！'],motion:'happy',end:1}:{emo:-6,say:['クゥ','うーん、それじゃないワン'],motion:'idle'}),
+             TL('relay','📨 伝言リレー（近所の猫に橋渡し）',ok=>ok?{emo:30,say:['ワン！','近所の猫さん経由で「よろしく」が伝わったワン！'],motion:'happy',end:1}:{emo:-5,say:['ワフ？','伝言がぐちゃぐちゃになったワン…'],motion:'sad'},{msg:'あしたの朝、窓辺でいっしょにひなたぼっこしよう',alts:['あしたの夜、窓辺でいっしょにひなたぼっこしよう','あしたの朝、屋根でいっしょにかくれんぼしよう']})]}]},
+ {topic:'しっぽが捕まらない',steps:[{say:['ワンワンワン！','しっぽをずっと追いかけてるのに捕まらないワン！しっぽって何者ワン！？'],motion:'spin',tip:'しっぽは相棒だと伝えるか、おすわりを指示してみよう',
+    actions:[CH('もっと速く回れば捕まりますよ',{emo:-10,say:['ワ、ワワワ…','め、目が回ったワン…'],motion:'spin'},{once:1}),
+             CH('しっぽはあなたの一部。いつもそばにいる相棒です',{emo:30,say:['ワフ…！','相棒…！なんだか感動したワン'],motion:'sit',end:1}),
+             TL('command','🐕 芸を指示する',r=>r==='sit'?{emo:25,say:['ワン','座ったらしっぽが目の前に来たワン！捕まえた！'],motion:'happy',end:1}:{emo:-4,say:['ワン？','しっぽは逃げたままワン'],motion:'spin'})]}]},
+ {topic:'となりのプードルに恋',steps:[
+   {say:['クゥ〜ン♡','となりのプードルちゃんが気になって…どうしたらいいワン？'],motion:'sit',tip:'「お手」で紳士的にごあいさつを教えよう',
+    actions:[TL('command','🐕 かっこいい芸を教える',r=>r==='paw'?{emo:20,say:['ワン！','お手でごあいさつ…紳士的ワン！'],motion:'paw',next:1}:r==='jump'?{emo:12,say:['ワン！','元気アピール！'],motion:'jump',next:1}:{emo:-5,say:['ワフ？','それ、かっこいいワン？'],motion:'idle'}),
+             CH('当たって砕けろです！',{emo:-8,say:['クゥ','砕けたくないワン…'],motion:'sad'},{once:1})]},
+   {say:['ワフ…','次は何をしたらいいワン？'],tip:'お花を発送するか、伝言リレーで気持ちを届けよう',
+    actions:[TL('ship','📦 プレゼントを発送',r=>r==='flower'?{emo:35,say:['ワォーン！','お花を渡したら、しっぽを振ってくれたワン！'],motion:'jump',end:1}:{emo:-5,say:['ワン？','プレゼントには向かないワン'],motion:'idle'}),
+             TL('relay','📨 伝言リレーで気持ちを届ける',ok=>ok?{emo:35,say:['ワンワン！','「また公園で会おうね」って返事が来たワン！'],motion:'happy',end:1}:{emo:-8,say:['クゥン','伝言が変な風に伝わったワン…'],motion:'sad'},{msg:'こんど公園でいっしょにボールあそびしよう',alts:['こんど公園でいっしょにおひるねしよう','こんど海でいっしょにボールあそびしよう']})]}]},
+ {topic:'おもちゃが棚の下',steps:[{say:['ワン！','おもちゃが棚の下に転がったワン！家にロボット掃除機ならあるワン'],motion:'dig',hint:'ロボット掃除機を遠隔操作できるかも',tip:'ロボットは「右に4回 → 上に4回」で届くよ',
+    actions:[TL('remote','🤖 ロボット掃除機を遠隔操作',ok=>ok?{emo:40,say:['ワンワン！','ロボットがおもちゃを押し出してくれたワン！'],motion:'jump',end:1}:{emo:-6,say:['ワフ','ロボットが迷子になったワン…'],motion:'sad'}),
+             TL('dispatch','🏃 スタッフ出動',r=>r==='take'?{emo:25,say:['ワン！','棚ごと持ち上げたワン！'],motion:'happy',end:1}:{emo:8,say:['ワン','時間かかったけど取れたワン'],motion:'idle',end:1})]}]},
+ {topic:'おやつダイエット',steps:[{say:['クゥ〜ン','もっとおやつ食べたいのに、ご主人が「ダイエット」って言うワン…'],motion:'sad',tip:'野菜スティックを送るか、ミナと運動しよう',
+    actions:[CH('ご主人はあなたの健康を考えてるんですよ',{emo:8,say:['ワフ','それはわかってるワン…'],motion:'sit'},{once:1}),
+             TL('ship','📦 アイテム発送',r=>r==='veggie'?{emo:35,say:['ワン！','野菜スティック、ポリポリでおいしいワン！'],motion:'happy',end:1}:['snack','cake','gum'].includes(r)?{emo:5,say:['ワン！','うれしいけど…ご主人に怒られそうワン'],motion:'idle',end:1}:{emo:-5,say:['ワン？','食べられないワン'],motion:'sad'}),
+             TL('dispatch','🏃 スタッフと運動',r=>r==='mina'?{emo:35,say:['ワンワン！','いっしょに走ったら、おやつより楽しいワン！'],motion:'run',end:1}:{emo:20,say:['ワン','いい運動になったワン'],motion:'happy',end:1})]}]},
+];
+RANDOM_T[0].steps[0].tip='アヒルのおもちゃを発送しよう'; RANDOM_T[1].steps[0].tip='チキン味歯ブラシを発送しよう';
+RANDOM_T[2].steps[0].tip='動物の扱いが得意なユイを出動させよう'; RANDOM_T[3].steps[0].tip='わんわんケーキを発送しよう';
+const NIGHT_T=[
+ {topic:'【夜勤】廊下にオバケ',steps:[
+   {say:['ク、クゥン…','ろ、廊下に白いオバケがいるワン…！'],motion:'shake',tip:'子守唄メモリーで落ち着かせよう',
+    actions:[TL('lullaby','🎶 子守唄で落ち着かせる',ok=>ok?{emo:25,say:['ハフ…','ちょっと落ち着いたワン'],motion:'sit',next:1}:{emo:-5,say:['キャン','音がバラバラでこわいワン！'],motion:'shake'}),
+             CH('オバケなんていませんよ',{emo:-5,say:['キャン！','いるもん！見たワン！'],motion:'bark'},{once:1})]},
+   {say:['クゥ？','でも暗くてよく見えないワン…'],tip:'ナイトライトを発送しよう',
+    actions:[TL('ship','📦 アイテム発送',r=>r==='light'?{emo:35,op:'ライトで照らしてみてください',say:['…ワン？','カーテンだったワン！はずかしいワン…'],motion:'happy',end:1}:{emo:-6,say:['クゥン','暗いままワン…'],motion:'shake'})]}]},
+ {topic:'【夜勤】寝ぼけて眠れない',steps:[{say:['ふぁ〜…ワフ','寝ぼけて電話しちゃったワン…なんだか眠れないワン'],motion:'down',tip:'子守唄を歌うか、ぬいぐるみを送ろう',
+    actions:[TL('lullaby','🎶 子守唄を歌う',ok=>ok?{emo:40,say:['Zzz…','すぴー…'],motion:'sleep',end:1}:{emo:0,say:['ワフ…','まだ眠れないワン'],motion:'down'}),
+             TL('ship','📦 アイテム発送',r=>r==='plush'?{emo:30,say:['ワフ…','ぬいぐるみ…ぎゅっ…Zzz'],motion:'sleep',end:1}:{emo:-5,say:['ワフ？','目がさめちゃったワン'],motion:'idle'})]}]},
+];
+const BOSS_T={topic:'【クレーム】評判を聞きつけて…',boss:1,base:'bark',steps:[{say:['ガルルル！','評判がいいって聞いたのに、届いたおもちゃがすぐ壊れたぞ！'],motion:'bark',hint:'評判が上がると手ごわい客も来る！',tip:'謝罪 → 共感 → 提案 の順で話そう',
+   actions:[TL('order','🙇 お詫びトークを組み立てる',n=>n===3?{emo:60,say:['…フン','…まあ、許してやる'],motion:'sit',end:1}:n>=1?{emo:25,say:['グルル','…次はないぞ'],motion:'idle',end:1}:{emo:-10,say:['ガウ！','もういい！'],motion:'bark'},{phrases:[['ご迷惑をおかけして申し訳ございません','謝罪'],['楽しみにされていたのに、残念でしたよね','共感'],['すぐに丈夫な新品をお送りします','提案']]}),
+     TL('ship','📦 代わりの品を発送',r=>r==='ball'?{emo:25,say:['ガウ','…最初からこれを送れ'],motion:'idle',end:1}:{emo:-10,say:['ガウ！','いらん！'],motion:'bark'})]}]};
+const rnd=n=>Math.floor(Math.random()*n), pick=a=>a[rnd(a.length)];
+function thankCall(k){ return {breed:k.bi,name:k.name,room:'home',emo:70,topic:'お礼の電話',random:1,thanks:1,steps:[{say:['ワンワン♪',`「${k.topic}」のときはありがとうワン！お礼を持ってきたワン！`],motion:'happy',
+  actions:[CH('わざわざありがとうございます！',{emo:30,gift:1,say:['ワン！','これからもよろしくワン！'],motion:'jump',end:1})]}]}; }
+function makeRandomCall(){
+  if(G.endless&&Math.random()<0.2){ const cand=G.karte.filter(k=>k.st>=4&&!k.thanked); if(cand.length){ const k=pick(cand); k.thanked=1; return thankCall(k); } }
+  const name=pick(NAMES);
+  if(G.rep>=70&&Math.random()<0.15) return Object.assign({breed:pick([23,43,24,33]),name,room:'home',emo:5,random:1},BOSS_T);
+  const t=G.night&&Math.random()<0.6?pick(NIGHT_T):pick(RANDOM_T);
+  return Object.assign({breed:rnd(50),name,room:G.night?'night':'home',emo:35+rnd(15),random:1},t);
+}
+
+/* =========================================================
+   UI ヘルパー
+   ========================================================= */
+function el(tag,cls,html){ const e=document.createElement(tag); if(cls) e.className=cls; if(html!=null) e.innerHTML=html; return e; }
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+let skipTyping=false;
+panel.addEventListener('click',e=>{ if(e.target.closest('#log')) skipTyping=true; });
+async function typeInto(node,text,pitch,speed=34){
+  skipTyping=false;
+  for(let i=0;i<text.length;i++){ if(skipTyping){ node.textContent=text; break; } node.textContent=text.slice(0,i+1);
+    if(pitch&&i%2===0&&!/[…、。！？\s（）]/.test(text[i])) blip(pitch); await sleep(speed); scrollDown(); }
+  scrollDown();
+}
+function scrollDown(){ panel.scrollTop=panel.scrollHeight; }
+function hud(){
+  $('#clock').textContent=`${G.night?'🌙':'☀️'} Day${G.day} ${G.hour%24}:00${G.endless?'〜':''}`; $('#coins').textContent='🦴 '+G.coins;
+  $('#rep').textContent='📣 '+G.rep; $('#avg').textContent='⭐ '+(G.stars.length?(G.stars.reduce((a,b)=>a+b,0)/G.stars.length).toFixed(1):'-');
+}
+function renderQueue(){
+  const q=$('#queue'); q.innerHTML='';
+  G.queue.forEach(d=>{ const e=el('div','qd',`⏳ ${BREEDS[d.breed][0]}の${d.name}<div class="pb"><i style="width:${Math.max(0,d.pat)}%;background:${d.pat<30?'#ff6b6b':d.pat<60?'#f0b13e':'#5cc48a'}"></i></div>`); q.append(e); });
+}
+const pitchOf=bi=>Math.max(260,Math.min(1100,560/Math.sqrt(BREEDS[bi][1].s||1)));
+function modal(html){ const m=$('#modal'), c=$('#mcard'); c.innerHTML=html; m.classList.add('on'); return c; }
+function closeModal(){ $('#modal').classList.remove('on'); }
+function toast(t){ const d=el('div',null,t); Object.assign(d.style,{position:'fixed',left:'50%',top:'64px',transform:'translateX(-50%)',background:'#2f3440',color:'#fff',padding:'8px 14px',borderRadius:'999px',fontSize:'13px',zIndex:30,whiteSpace:'nowrap'}); document.body.append(d); setTimeout(()=>d.remove(),2200); }
+
+/* =========================================================
+   ミニゲーム
+   ========================================================= */
+const GAMES={
+  translate(p){ return new Promise(res=>{
+    const c=modal(`<h2>🐾 犬語翻訳</h2><div class="hintlist"><b style="font-size:18px">「${p.bark}」</b><br>🔍 ${p.hint}</div>${G.upg.trans?`<div class="hintlist">🤖 翻訳機Lv2の予想：「${p.opts.find(o=>o[1])[0]}」っぽい</div>`:''}<div class="lead">モニターの犬のしぐさもヒントだよ。なんて言ってる？</div><div class="grid" id="g"></div><div class="fb" id="fb"></div>`);
+    p.opts.forEach(([t,ok])=>{ const b=el('button','gbtn',`<span class="e">${ok?'💬':'💬'}</span>${t}`); b.onclick=async()=>{ b.classList.add(ok?'ok':'ng'); chime(ok); c.querySelector('#fb').textContent=ok?'正解！翻訳成功':'ちがうみたい…'; await sleep(800); closeModal(); res(!!ok); }; c.querySelector('#g').append(b); });
+  }); },
+  rhythm(p){ return new Promise(res=>{
+    const c=modal(`<h2>🎵 なでなでリズム</h2><div class="lead">オレンジの輪が手のマークに重なった瞬間に「なでる」をタップ！（6回中4回成功でクリア）</div>
+      <div class="rhy"><div class="tg">✋</div><div class="rg" id="rg"></div></div><div class="fb" id="fb">準備…</div><button class="big" id="tap">なでる 👋</button>`);
+    const per=1000, beats=6, start=performance.now()+1200, judged=new Set(); let hits=0, lastBeat=-1, done=false;
+    const rg=c.querySelector('#rg'), fb=c.querySelector('#fb');
+    const loop=()=>{ if(done) return; const t=performance.now()-start;
+      if(t<0){ rg.style.transform='translate(-50%,-50%) scale(2.6)'; requestAnimationFrame(loop); return; }
+      const ph=(t%per)/per, b=Math.floor(t/per);
+      rg.style.transform=`translate(-50%,-50%) scale(${1+1.6*(1-ph)})`;
+      if(b!==lastBeat){ lastBeat=b; if(b>0&&b<=beats) tone(660,0.08,'sine',0.05); if(b===0) fb.textContent='スタート！'; }
+      if(t>beats*per+per*0.3){ done=true; const ok=hits>=4; fb.textContent=`${hits}/6 成功 ${ok?'🎉 落ち着いた！':'…もう少し'}`; chime(ok); setTimeout(()=>{ closeModal(); res(ok); },1100); return; }
+      requestAnimationFrame(loop); };
+    requestAnimationFrame(loop);
+    c.querySelector('#tap').onclick=()=>{ const t=performance.now()-start; if(t<0) return; const ph=(t%per)/per, b=Math.floor(t/per);
+      let near=null; if(ph>0.8) near=b+1; else if(ph<0.16) near=b;
+      if(near!=null&&near>=1&&near<=beats&&!judged.has(near)){ judged.add(near); hits++; fb.textContent='ナイスなでなで！ ✨'; blip(900); setDog('happy',500); }
+      else { fb.textContent='ずれた…'; } };
+  }); },
+  map(){ return new Promise(res=>{
+    const L={0:'🏫',3:'🏥',6:'🌳',8:'🥐',12:'🚃',14:'🏪',15:'⛲',16:'🌳',19:'🏠',10:'🥐'};
+    const roads=new Set([2,5,7,11,13,17,18]);
+    const target=7;
+    const c=modal(`<h2>🗺️ 迷子の居場所を特定</h2><div class="hintlist">👃 パンの焼けるにおい<br>👂 カンカン…踏切の音<br>👀 大きな木の下にいる</div><div class="lead">3つ全部のとなりにある場所はどこ？（チャンス2回）</div><div class="map" id="m"></div><div class="fb" id="fb"></div>`);
+    let tries=2; const m=c.querySelector('#m');
+    for(let i=0;i<20;i++){ const b=el('button',roads.has(i)?'road':'',L[i]||''); m.append(b);
+      b.onclick=async()=>{ if(L[i]) { c.querySelector('#fb').textContent='目印の上じゃなくて、そのとなりだよ'; return; }
+        if(i===target){ b.classList.add('ok'); b.textContent='🐶'; chime(true); c.querySelector('#fb').textContent='発見！'; await sleep(900); closeModal(); res(true); }
+        else { b.classList.add('ng'); chime(false); tries--; c.querySelector('#fb').textContent=tries?'ちがうみたい…あと1回':'見つからない…'; if(!tries){ m.children[target].classList.add('ok'); m.children[target].textContent='🐶'; await sleep(1200); closeModal(); res(false); } } };
+    }
+  }); },
+  ship(){ return new Promise(res=>{
+    const c=modal(`<h2>📦 アイテム発送</h2><div class="lead">倉庫から1つ選んで、ワンちゃんの家に即お届け！</div><div class="grid" id="g"></div>`);
+    ITEMS.filter(i=>!i[3]).forEach(([id,e,n])=>{ const b=el('button','gbtn',`<span class="e">${e}</span>${n}`); b.onclick=async()=>{ closeModal(); bubble('sys',`📦 「${n}」を発送しました`); setOp('point',1500); await dropItem(id); res(id); }; c.querySelector('#g').append(b); });
+  }); },
+  dispatch(){ return new Promise(res=>{
+    const c=modal(`<h2>🏃 スタッフ出動</h2><div class="lead">誰を向かわせる？得意分野で結果が変わるよ</div><div id="g"></div>`);
+    STAFF.filter(s=>!s.hire||G.upg.ken).forEach(s=>{ const b=el('button','staff',`<span class="av">${s.av}</span><div><b>${s.name}（${s.skill}）</b><span>${s.desc}</span></div>`); b.onclick=async()=>{ closeModal(); bubble('sys',`🏃 ${s.name}が出動しました`); setOp('point',1500); await staffArrive(s.id); res(s.id); }; c.querySelector('#g').append(b); });
+  }); },
+  transfer(){ return new Promise(res=>{
+    const D=[['walk','🚶 お散歩課'],['snack','🍖 おやつ配送課'],['med','🏥 わんわん医療課'],['lost','🔍 迷子捜索課'],['claim','📢 お客様相談課']];
+    const c=modal(`<h2>☎️ 部署へ転送</h2><div class="lead">どの部署につなぐ？（転送中は保留音が流れて、待ち列の犬も待たされるよ）</div><div class="grid" id="g" style="grid-template-columns:1fr 1fr"></div>`);
+    D.forEach(([id,n])=>{ const b=el('button','gbtn',n); b.onclick=async()=>{ c.innerHTML=`<h2>♪ 保留中…</h2><div class="res">${n}に確認しています<br>♪〜♬〜♪</div>`; setOp('think'); holdMusic(2.6); holdBoost=true; await sleep(2700); holdBoost=false; closeModal(); setOp('phone'); res(id); }; c.querySelector('#g').append(b); });
+  }); },
+  manual(p){ return new Promise(res=>{
+    const K=['散歩','おやつ','元気がない','雷','迷子','お風呂'];
+    const c=modal(`<h2>📖 マニュアル検索</h2><div class="lead">検索キーワードを選んでね</div><div class="grid" id="g"></div><div class="hintlist" id="pg" style="display:none;margin-top:10px"></div>`);
+    const PG={'散歩':'p.12 散歩の悩み → お散歩課へ転送','おやつ':'p.27 おやつの配送遅延 → おやつ配送課の担当です','元気がない':'p.42 飼い主さんが元気ない時 →「そっと寄り添う」のが一番','雷':'p.55 雷 → なでて落ち着かせ、雷よけマントを','迷子':'p.61 迷子 → におい・音から場所を特定','お風呂':'p.70 お風呂嫌い → アヒルのおもちゃが効果的'};
+    setOp('think');
+    K.forEach(k=>{ const b=el('button','gbtn',k); b.onclick=async()=>{ const pg=c.querySelector('#pg'); pg.style.display='block'; pg.innerHTML='📄 '+PG[k]; const ok=k===p.answer; b.classList.add(ok?'ok':'ng'); await sleep(1500); closeModal(); setOp('phone'); res(ok); }; c.querySelector('#g').append(b); });
+  }); },
+  conference(){ return new Promise(async res=>{
+    bubble('sys','👥 先輩犬「ゲンさん」（セントバーナード）が通話に参加しました'); addSenior();
+    await sleep(500);
+    await dogSay('ワフ…ゴホン','わしの経験ではな、ご主人が元気ない時は、だまってピタッと横に座るのが一番じゃ',{name:'ゲンさん（先輩犬）',pitch:240});
+    res(true);
+  }); },
+  order(p){ return new Promise(res=>{
+    const sh=p.phrases.map((x,i)=>[...x,i]).sort(()=>Math.random()-0.5); const seq=[];
+    const c=modal(`<h2>🙇 お詫びトーク</h2><div class="lead">セリフを伝える順番にタップしよう。クレーム対応の基本は…？</div><div id="g"></div><div class="seq" id="sq">（ここに並びます）</div><div class="fb" id="fb"></div>`);
+    sh.forEach(([t,tag,i])=>{ const b=el('button','act',t); b.onclick=async()=>{ if(seq.includes(i)) return; seq.push(i); b.disabled=true; b.style.opacity=.4;
+      c.querySelector('#sq').innerHTML=seq.map((k,j)=>`${j+1}. ${p.phrases[k][0]}`).join('<br>');
+      if(seq.length===3){ const n=seq.filter((k,j)=>k===j).length; chime(n===3); c.querySelector('#fb').textContent=n===3?'完璧！ 謝罪 → 共感 → 提案':`${n}/3 正しい位置…（正解：謝罪→共感→提案）`; await sleep(1400); closeModal();
+        for(const k of seq) await opSay(p.phrases[k][0]); res(n); } }; c.querySelector('#g').append(b,el('div',null,'')); });
+  }); },
+  remote(){ return new Promise(res=>{
+    const M=['','','🗄️','🗄️','🧸','','🛋️','','','','','🛋️','','🪴','','','','','🪴','','','','','',''];
+    let pos=20, moves=10, done=false;
+    const c=modal(`<h2>🤖 ロボット掃除機を遠隔操作</h2><div class="lead">棚の下のおもちゃ🧸までロボットを動かそう（残り<b id="mv">10</b>手）</div><div class="rc" id="g"></div><div class="pad"><span></span><button data-d="-5">⬆️</button><span></span><button data-d="-1">⬅️</button><span></span><button data-d="1">➡️</button><span></span><button data-d="5">⬇️</button><span></span></div><div class="fb" id="fb"></div>`);
+    const g=c.querySelector('#g'), fb=c.querySelector('#fb');
+    const draw=()=>{ g.innerHTML=''; M.forEach((m,i)=>g.append(el('div',null,i===pos?'🤖':m))); c.querySelector('#mv').textContent=moves; };
+    draw();
+    c.querySelectorAll('.pad button').forEach(b=>b.onclick=async()=>{ if(done) return; const d=+b.dataset.d, np=pos+d;
+      const ok=np>=0&&np<25&&!(d===1&&pos%5===4)&&!(d===-1&&pos%5===0)&&!['🗄️','🛋️','🪴'].includes(M[np]);
+      moves--; if(ok){ pos=np; fb.textContent=''; tone(440+pos*12,0.06,'square',0.03); } else { fb.textContent='ゴツン！'; tone(150,0.1,'square',0.04); }
+      draw();
+      if(M[pos]==='🧸'){ done=true; chime(true); fb.textContent='おもちゃを押し出した！'; await sleep(900); closeModal(); res(true); }
+      else if(moves<=0){ done=true; chime(false); fb.textContent='バッテリー切れ…'; await sleep(900); closeModal(); res(false); } });
+  }); },
+  relay(p){ return new Promise(async res=>{
+    const c=modal(`<h2>📨 伝言リレー</h2><div class="lead">近所の犬たちに伝言をつなぐよ。メッセージを覚えて！</div><div class="hintlist" id="msg" style="font-size:16px;font-weight:800;text-align:center">「${p.msg}」</div><div class="fb" id="fb"></div><div id="g"></div>`);
+    const fb=c.querySelector('#fb'); for(let i=4;i>0;i--){ fb.textContent=`🐕 → 🐩 → 🐕‍🦺 伝言中… ${i}`; blip(600+i*80); await sleep(1000); }
+    c.querySelector('#msg').textContent='（伝言は3匹目のワンちゃんに届きました）'; fb.textContent='正しく届いたメッセージはどれ？';
+    [[p.msg,1],...p.alts.map(a=>[a,0])].sort(()=>Math.random()-0.5).forEach(([t,ok])=>{ const b=el('button','act',t); b.style.width='100%'; b.style.marginBottom='6px';
+      b.onclick=async()=>{ b.style.background=ok?'#e4f8ec':'#ffe9e9'; chime(ok); await sleep(700); closeModal(); res(!!ok); }; c.querySelector('#g').append(b); });
+  }); },
+  lullaby(){ return new Promise(async res=>{
+    const P=[['ド',523,'#ff8a8a'],['ミ',659,'#ffc04d'],['ソ',784,'#6cc36a'],['ド↑',1046,'#6aa8ff']];
+    const seq=Array.from({length:4},()=>rnd(4)); let idx=0, ready=false;
+    const c=modal(`<h2>🎶 子守唄メモリー</h2><div class="lead">流れるメロディを覚えて、同じ順番で弾こう</div><div class="simon" id="g"></div><div class="fb" id="fb">よく聞いてね…</div>`);
+    const fb=c.querySelector('#fb');
+    const lit=i=>{ btns[i].classList.add('lit'); tone(P[i][1],0.35,'sine',0.07); setTimeout(()=>btns[i].classList.remove('lit'),350); };
+    const btns=P.map(([n,f,col],i)=>{ const b=el('button',null,n); b.style.background=col;
+      b.onclick=async()=>{ if(!ready) return; lit(i);
+        if(i===seq[idx]){ idx++; if(idx===seq.length){ ready=false; fb.textContent='すてきな子守唄♪'; await sleep(500); chime(true); await sleep(700); closeModal(); res(true); } }
+        else { ready=false; fb.textContent='音がはずれちゃった…'; chime(false); await sleep(900); closeModal(); res(false); } };
+      c.querySelector('#g').append(b); return b; });
+    await sleep(800); for(const i of seq){ lit(i); await sleep(650); }
+    fb.textContent='きみの番！'; ready=true;
+  }); },
+  command(){ return new Promise(res=>{
+    const K=[['sit','🐕 おすわり'],['down','🛏️ ふせ'],['paw','🤝 お手'],['spin','🌀 くるくる'],['jump','⬆️ ジャンプ']];
+    const c=modal(`<h2>🐕 芸を指示する</h2><div class="lead">マイクで指示を出すと、モニターの犬がその場でやってくれるよ</div><div class="grid" id="g"></div>`);
+    K.forEach(([id,n])=>{ const b=el('button','gbtn',n); b.onclick=async()=>{ closeModal(); await opSay(`「${n.split(' ')[1]}！」`); setDog(id,2600); await sleep(1500); res(id); }; c.querySelector('#g').append(b); });
+  }); },
+};
+let holdBoost=false;
+
+/* =========================================================
+   通話エンジン
+   ========================================================= */
+function bubble(kind,html){ const b=el('div','bub '+kind,html); $('#log').append(b); scrollDown(); return b; }
+async function dogSay(bark,jp,o={}){
+  const name=o.name||`${C.sc.name}（${BREEDS[C.sc.breed][0]}）`, pitch=o.pitch||pitchOf(C.sc.breed);
+  const b=bubble('dog',`<div class="nm">${name}</div><div class="bark"></div><div class="jp"></div>`);
+  await typeInto(b.querySelector('.bark'),bark,pitch,55); await typeInto(b.querySelector('.jp'),jp,pitch*1.15,30); await sleep(250);
+}
+async function opSay(t){ const b=bubble('op',''); setOp('phone'); await typeInto(b,t,null,18); await sleep(200); }
+function setDog(m,dur){ dogMotion=m; clearTimeout(dogMotionTimer); if(dur) dogMotionTimer=setTimeout(()=>{ dogMotion=baseMotion(); },dur); }
+function baseMotion(){ if(!C) return 'idle'; if(C.emo>=75) return 'happy'; if(C.sc.base&&C.emo<45) return C.sc.base; return C.emo<30?'sad':'idle'; }
+function setEmo(v){
+  C.emo=Math.max(0,Math.min(100,v)); const e=C.emo;
+  $('#emoBar').style.width=e+'%'; $('#emoBar').style.background=e<30?'#ff6b6b':e<60?'#f0b13e':'#3fbf7f';
+  $('#emoFace').textContent=e<15?'😭':e<30?'😟':e<50?'😐':e<75?'🙂':'😄'; $('#emoNum').textContent='安心 '+Math.round(e);
+}
+function renderIdle(html){ panel.innerHTML=html; }
+
+function title(){
+  setOp('wave'); opBase='idle';
+  renderIdle(`<h1>🐾 わんわんコールセンター</h1><p class="lead">あなたは新人オペレーター。今日も困ったワンちゃんから電話がかかってきます。<br>会話・犬語翻訳・アイテム発送・スタッフ出動・転送など、いろんな方法で解決して★を集めよう！</p>
+   <button class="big" id="go">出勤する ▶</button><button class="big sub" id="ideas">💡 アイデア一覧（50個）を見る</button>
+   <p class="lead">デモ版：1日目の6件（ボス戦あり）→ 日勤/夜勤のエンドレス。ショップ・実績・着せ替えは右上の≡から。犬のセリフはタップで早送りできます。</p>`);
+  $('#go').onclick=()=>{ ac(); G.queue=[mkQueue(),mkQueue()]; renderQueue(); nextCall(); };
+  $('#ideas').onclick=showIdeas;
+}
+function mkQueue(){ const r=makeRandomCall(); r.pat=100; return r; }
+function nextCall(){
+  let sc;
+  if(!G.endless&&G.story<STORY.length) sc=STORY[G.story];
+  else sc=G.queue.length?G.queue.shift():makeRandomCall();
+  if(G.endless&&G.queue.length<2) G.queue.push(mkQueue());
+  renderQueue(); ring(sc);
+}
+function ring(sc){
+  buildRoom(sc.room); setCallDog(BREEDS[sc.breed][1]); dogMotion='bark'; screen.material=screenMat;
+  $('#caption').textContent='📞 着信中…';
+  opBase='idle'; setOp('surprise',1200);
+  renderIdle(`<div class="incoming ring"><div class="ic">📞</div><div class="lead" style="margin:4px 0">着信中…</div><b>${BREEDS[sc.breed][0]}の「${sc.name}」さん</b><div class="lead" style="margin:6px 0 0">${sc.boss?'⚠️ なんだか怒っているようです…':''}</div></div>
+    <button class="big green" id="ans">📞 応答する</button>`);
+  ringStart();
+  $('#ans').onclick=()=>{ ac(); ringStop(); startCall(sc); };
+}
+async function startCall(sc){
+  C={sc,emo:sc.emo,step:0,used:new Set(),said:new Set(),t0:performance.now(),busy:true,ended:false};
+  if(sc.room==='night'&&G.night) G.nightCalls++;
+  $('#caption').textContent=`📹 ${sc.name}（${BREEDS[sc.breed][0]}）`;
+  panel.innerHTML=`<div class="callhead"><b>📞 ${sc.name}さん <span style="font-weight:600;color:#6a7385;font-size:12px">${BREEDS[sc.breed][0]}・${sc.topic}</span></b><span class="timer" id="tm">0:00</span></div>
+    <div class="emo"><span class="face" id="emoFace"></span><div class="bar"><i id="emoBar"></i></div><span class="num" id="emoNum"></span></div>
+    <div id="log"></div><div class="hint" id="hint" style="display:none"></div><div id="acts"></div>`;
+  setEmo(sc.emo); setDog(baseMotion());
+  opBase='phone'; setOp('bow',1500);
+  await opSay('お電話ありがとうございます！わんわんコールセンターです！');
+  showStep(0);
+}
+async function showStep(i){
+  C.step=i; const st=C.sc.steps[i]; $('#acts').innerHTML='';
+  if(!C.said.has(i)){ C.said.add(i); if(st.motion) setDog(st.motion,2600); await dogSay(st.say[0],st.say[1]); }
+  const h=$('#hint'); if(st.hint){ h.style.display='block'; h.textContent='💡 '+st.hint; } else h.style.display='none';
+  const acts=st.actions.map((a,k)=>[a,i+':'+k]).filter(([a,key])=>!(a.once&&C.used.has(key)));
+  const box=$('#acts'); const tools=el('div','acts-tools');
+  acts.forEach(([a,key])=>{
+    const b=el('button','act'+(a.type==='game'?' tool':''),a.type==='choice'?'💬 '+a.t:a.label);
+    b.onclick=()=>doAction(a,key); (a.type==='game'?tools:box).append(b);
+  });
+  if(tools.children.length) box.append(tools);
+  if(G.helps>0){ const hb=el('button','act helpb',`🆘 先輩に聞く（残り${G.helps}回）`); hb.onclick=()=>{ if(C.busy) return; G.helps--; bubble('sys','🧑‍💼 先輩：「'+tipFor(st)+'」'); hb.remove(); }; box.append(hb); }
+  C.busy=false; scrollDown();
+}
+function tipFor(st){ if(st.tip) return st.tip; let best=null,bv=-1e9; st.actions.forEach(a=>{ if(a.type==='choice'&&a.r.emo>bv){ bv=a.r.emo; best=a; } });
+  if(best&&bv>0) return `「${best.t}」と言ってみたら？`; const t=st.actions.find(a=>a.type==='game'); return t?`${t.label.replace(/^\S+\s/,'')}を試してみて`:'まずは気持ちに寄り添って'; }
+async function doAction(a,key){
+  if(C.busy) return; C.busy=true; $('#acts').innerHTML=''; $('#hint').style.display='none';
+  if(a.once) C.used.add(key);
+  let o;
+  if(a.type==='choice'){ await opSay(a.t); o=a.r; }
+  else { G.usedGames.add(a.game); const r=await GAMES[a.game](a.p||{});
+    if(a.game==='dispatch'&&r==='ken'){ let best=null; for(const id of ['take','mina','yui']){ const x=a.r(id); if(!best||(x.emo||0)>(best.emo||0)) best=x; } o=Object.assign({},best,{emo:Math.round((best.emo||0)*0.8)}); }
+    else o=a.r(r); }
+  await playOutcome(o);
+}
+async function playOutcome(o){
+  if(o.op) await opSay(o.op);
+  if(o.gift){ bubble('sys','🎁 お礼のプレゼントが届きました（🦴+50）'); await dropItem('gift'); G.coins+=50; G.thanks++; hud(); }
+  if(o.emo){ setEmo(C.emo+o.emo); bubble('sys',(o.emo>0?'💗 安心 +':'💔 安心 ')+o.emo); if(o.emo<0) C.miss=(C.miss||0)+1; }
+  setDog(o.motion||baseMotion(),2800);
+  if(o.say) await dogSay(o.say[0],o.say[1]);
+  if(o.end) return endCall();
+  showStep(o.next!=null?o.next:C.step);
+}
+async function endCall(){
+  C.ended=true;
+  const sec=Math.round((performance.now()-C.t0)/1000), e=C.emo;
+  let st=e>=85?5:e>=70?4:e>=50?3:e>=30?2:1; if(sec>150&&st>1) st--;
+  G.combo=st>=4?G.combo+1:0; G.maxCombo=Math.max(G.maxCombo,G.combo);
+  const comboB=G.combo>=2?G.combo*5:0;
+  const coin=Math.round((st*10+(C.sc.boss?50:0)+(sec<60?10:0)+comboB)*(1+G.rep/200));
+  const dRep=(st-3)*6; G.rep=Math.max(0,Math.min(100,G.rep+dRep));
+  if(C.sc.boss&&st>=3) G.bossWin++;
+  const rv=pick(REV[st]); G.reviews.unshift({name:C.sc.name,breed:BREEDS[C.sc.breed][0],st,text:rv});
+  const newStamp=!G.stamps.has(C.sc.breed); G.stamps.add(C.sc.breed);
+  G.stars.push(st); G.coins+=coin; if(!C.sc.thanks) G.karte.push({name:C.sc.name,bi:C.sc.breed,breed:BREEDS[C.sc.breed][0],topic:C.sc.topic,st});
+  setDog(st>=3?'happy':'sad'); setOp(st>=3?'cheer':'sad',2600); opBase='idle'; chime(st>=3);
+  await opSay(st>=3?'またいつでもお電話くださいね！':'お役に立てず、すみませんでした…');
+  bubble('sys','📴 通話終了');
+  await sleep(500);
+  const c=modal(`<h2>通話レポート</h2><div class="stars">${'★'.repeat(st)}${'☆'.repeat(5-st)}</div>
+    <div class="res">${C.sc.name}（${BREEDS[C.sc.breed][0]}）<br>安心度 ${Math.round(e)} ／ 通話時間 ${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}<br><b>🦴 +${coin}</b>${C.sc.boss?'（ボスボーナス込み）':''}${comboB?`<br>🔥 ${G.combo}コンボ！ +${comboB}`:''}<br>📣 評判 ${dRep>=0?'+':''}${dRep}（${G.rep}）${newStamp?'<br>🐾 新しい犬種スタンプ！':''}</div><div class="hintlist" style="margin-top:8px">💬 口コミ：「${rv}」</div>
+    <button class="big" id="nx">次の電話へ ▶</button>`);
+  if(!G.endless) G.story++;
+  G.hour++; hud(); checkAch();
+  c.querySelector('#nx').onclick=()=>{ closeModal(); C=null; $('#caption').textContent='待機中'; screen.material=standbyMat;
+    if(!G.endless&&G.story>=STORY.length) return dayReport();
+    renderIdle(`<div class="incoming"><div class="ic">☕</div><div class="lead">ひと息ついています…</div></div>`); setTimeout(nextCall,1400); };
+}
+function dayReport(){
+  const avg=G.stars.reduce((a,b)=>a+b,0)/G.stars.length;
+  const rank=avg>=4.5?['S','スーパーバイザー候補！']:avg>=3.8?['A','頼れる先輩オペレーター']:avg>=3?['B','一人前オペレーター']:['C','まだまだ研修生'];
+  setOp('cheer',3000);
+  const c=modal(`<h2>📊 1日目の日報</h2><div class="res">対応件数：${G.stars.length}件<br>平均評価：⭐${avg.toFixed(1)}<br>獲得：🦴${G.coins}<br>待たせて切られた電話：${G.missed}件<br><br>評価ランク <b style="font-size:26px">${rank[0]}</b><br>${rank[1]}</div>
+   <div class="hintlist" style="margin-top:10px">🛒 ショップでオフィス改装・翻訳機・スタッフ雇用ができます（≡メニュー）</div>
+   <button class="big" id="cont">☀️ 日勤で電話をとり続ける ▶</button><button class="big" id="nightb" style="background:#4b5b9a;box-shadow:0 4px 0 #34407a">🌙 夜勤シフトに入る ▶</button><button class="big sub" id="id2">💡 アイデア一覧を見る</button>`);
+  c.querySelector('#nightb').onclick=()=>{ closeModal(); G.endless=true; G.day++; G.hour=21; setNight(true); G.queue=[mkQueue(),mkQueue()]; nextCall(); };
+  c.querySelector('#cont').onclick=()=>{ closeModal(); G.endless=true; G.day++; G.hour=9; setNight(false); if(G.queue.length<2) G.queue.push(mkQueue()); nextCall(); };
+  c.querySelector('#id2').onclick=showIdeas;
+}
+
+/* ---------- アイデア一覧 ---------- */
+const IDEAS=[
+ ['依頼（困りごと）',['ボールがソファの下に入った','雷がこわい（雷フラッシュ＆ゴロゴロ演出）','散歩中に迷子','飼い主さんが元気ない（お悩み相談）','おやつ通販が届かない','散歩代行へのクレーム（1日目のボス戦）','お風呂がイヤ','歯みがきがキライ','散歩に連れてってもらえない','誕生日パーティーをしたい','新入りの猫と仲良くなりたい','しっぽが捕まえられない（哲学相談）','となりのプードルに恋をした','夜勤：廊下にオバケが出た','夜勤：寝ぼけて眠れない','おもちゃが棚の下に（ロボット掃除機）','おやつダイエットの相談','評判を聞きつけたクレーム犬（評判70以上で出現）']],
+ ['解決方法（ミニゲーム）',['会話の選択肢（言い方で安心度が変わる）','犬語翻訳：しっぽ・しぐさがヒント','なでなでリズム：タイミングでなでる','迷子地図：におい・音から居場所を特定','アイテム発送（13種・箱が届く演出）','スタッフ出動：得意分野で結果が変わる','部署へ転送＋保留音','マニュアル検索','三者通話：先輩犬に相談','お詫びトーク：謝罪→共感→提案の順番パズル','ロボット掃除機を遠隔操作（矢印パズル）','伝言リレー（メッセージ記憶ゲーム）','子守唄メモリー（メロディを覚えて弾く）','芸の指示：おすわり・お手…犬がモニターで実演']],
+ ['システム',['安心ゲージ（犬の感情メーター）','★評価・通話タイマー・日報とランク','🦴コイン（評判が高いほどボーナス）','着信の待ち列（待たせすぎると切られる）','犬種ごとの口調・声の高さ（どうぶつ語ボイス）','ビデオ通話モニターに犬が3Dで映る','顧客カルテ（対応履歴）','犬種スタンプ帳（50種コンプを目指す）','口コミ＆評判システム','★4以上の連続でコンボボーナス','実績（トロフィー）12種','先輩ヘルプ：回数制でヒントを聞ける','ショップでオフィス改装（植物・ブース増設・翻訳機Lv2・コーヒー）','新スタッフ雇用（なんでも屋ケン）','オペレーター着せ替え','夜勤シフト（オフィスが夜に・夜限定の依頼）','リピーター犬のお礼電話（プレゼント付き）','季節イベント：ハロウィン（飾り＆犬が魔女帽子に）']],
+];
+function showIdeas(){
+  let n=0; const html=IDEAS.map(([cat,list])=>`<h3>${cat}</h3><ul>${list.map(t=>`<li><span class="tag y">実装済</span>${++n}. ${t}</li>`).join('')}</ul>`).join('');
+  const c=modal(`<h2>💡 アイデア一覧（${IDEAS.reduce((a,b)=>a+b[1].length,0)}個）</h2><div class="idea">${html}</div><button class="big sub" id="cl">閉じる</button>`);
+  c.querySelector('#cl').onclick=closeModal;
+}
+const REV={5:['神対応だったワン！また電話するワン🐾','しっぽが止まらないワン！最高！'],4:['とっても親切だったワン','助かったワン！ありがとう'],3:['まあまあだったワン','ふつうに解決したワン'],2:['ちょっと不安が残ったワン…','時間がかかったワン'],1:['たらい回しにされたワン…','もう電話しないワン…']};
+const ACH=[['first','はじめての解決',()=>G.stars.length>=1],['boss','ボス撃破',()=>G.bossWin>=1],['star5','★5を獲得',()=>G.stars.includes(5)],['combo3','3コンボ達成',()=>G.maxCombo>=3],
+ ['games8','ミニゲーム8種類を使った',()=>G.usedGames.size>=8],['stamp10','犬種スタンプ10種',()=>G.stamps.size>=10],['shop','はじめてのお買い物',()=>Object.keys(G.upg).length>0],['night','夜勤デビュー',()=>G.nightCalls>=1],
+ ['thanks','お礼の電話を受けた',()=>G.thanks>=1],['rich','🦴500達成',()=>G.coins>=500],['rep90','評判90以上',()=>G.rep>=90],['ten','10件対応',()=>G.stars.length>=10]];
+function checkAch(){ for(const [id,n,f] of ACH) if(!G.ach.has(id)&&f()){ G.ach.add(id); setTimeout(()=>{ toast('🏆 実績解除：'+n); chime(true); },600); } }
+const SHOP=[{id:'plant',e:'🪴',n:'観葉植物',c:30,d:'オフィスに緑を（見た目）'},{id:'coffee',e:'☕',n:'コーヒーマシン',c:40,d:'先輩ヘルプの回数 +2'},
+ {id:'halloween',e:'🎃',n:'ハロウィン装飾',c:50,d:'季節イベント：オフィスが飾られ、犬が魔女帽子に'},{id:'booth',e:'🏢',n:'ブース増設',c:80,d:'同僚が待ち列を手伝う：待ち時間の減りが半分'},
+ {id:'trans',e:'🤖',n:'翻訳機 Lv2',c:100,d:'犬語翻訳で正解を予想してくれる'},{id:'ken',e:'🧰',n:'スタッフ雇用：ケン',c:120,d:'なんでも屋。どんな出動もそこそこ成功'}];
+function applyUpg(id){ if(decor[id]) decor[id].visible=true; if(id==='coffee') G.helps+=2; }
+function showShop(){ const c=modal(`<h2>🛒 ショップ・改装　<span style="font-size:14px">🦴 ${G.coins}</span></h2><div id="g"></div><button class="big sub" id="cl">閉じる</button>`);
+  SHOP.forEach(x=>{ const own=G.upg[x.id], r=el('div','shopi',`<span class="e">${x.e}</span><div><b>${x.n}</b>${x.d}</div>`), b=el('button',null,own?'導入済':`🦴${x.c}`);
+    b.disabled=!!own||G.coins<x.c; b.onclick=()=>{ G.coins-=x.c; G.upg[x.id]=1; applyUpg(x.id); hud(); chime(true); toast(`${x.e} ${x.n} を導入しました！`); checkAch(); showShop(); }; r.append(b); c.querySelector('#g').append(r); });
+  c.querySelector('#cl').onclick=closeModal; }
+function chipsRow(c,label,opts,get,set){ c.append(el('div','lead',label)); const b=el('div','chips'); c.append(b);
+  opts.forEach(([v,t])=>{ const x=el('button','chip'+(get()===v?' on':''),t); x.onclick=()=>{ set(v); b.querySelectorAll('.chip').forEach(y=>y.classList.remove('on')); x.classList.add('on'); }; b.append(x); }); }
+function swRow(c,label,cols,get,set){ c.append(el('div','lead',label)); const b=el('div','chips'); c.append(b);
+  cols.forEach(v=>{ const x=el('button','sw'+(get()===v?' on':'')); x.style.background=v; x.onclick=()=>{ set(v); b.querySelectorAll('.sw').forEach(y=>y.classList.remove('on')); x.classList.add('on'); }; b.append(x); }); }
+function showCustomize(){ const c=modal(`<h2>👩‍💼 オペレーター着せ替え</h2><div id="g"></div><button class="big sub" id="cl">閉じる</button>`), g=c.querySelector('#g'), up=()=>rebuildOp();
+  chipsRow(g,'髪型',[['ponytail','ポニテ'],['bob','ボブ'],['short','ショート'],['twintail','ツインテ'],['curly','くせ毛'],['spiky','ツンツン'],['bun','おだんご']],()=>OP_H.hair,v=>{ OP_H.hair=v; up(); });
+  swRow(g,'髪の色',['#2b211c','#4a3426','#b07a45','#f4e3b5','#f08cc0','#7fb2e5','#8c6bd6','#e0533f'],()=>OP_H.hairC,v=>{ OP_H.hairC=v; up(); });
+  chipsRow(g,'目',[['sparkle','キラキラ'],['round','まる目'],['smile','にっこり'],['sharp','つり目'],['sleepy','たれ目']],()=>OP_H.eyes,v=>{ OP_H.eyes=v; up(); });
+  chipsRow(g,'かぶりもの',[['none','なし'],['catband','ネコ耳'],['ribbon','リボン'],['beret','ベレー'],['hood_cat','けもフード']],()=>OP_H.hat||'none',v=>{ OP_H.hat=v; up(); });
+  swRow(g,'制服の色',['#3d6fb0','#e84d5b','#3fbf7f','#8c6bd6','#25232a','#ff8a3d','#f2ede4'],()=>OP_H.topC,v=>{ OP_H.topC=v; up(); });
+  chipsRow(g,'ボトムス',[['skirt','スカート'],['pants','パンツ']],()=>OP_H.bottom,v=>{ OP_H.bottom=v; up(); });
+  swRow(g,'ボトムスの色',['#2c3e66','#25232a','#8e8a94','#b07a4f','#e3d3b8'],()=>OP_H.botC,v=>{ OP_H.botC=v; up(); });
+  c.querySelector('#cl').onclick=closeModal; }
+function showAch(){ const c=modal(`<h2>🏆 実績 ${G.ach.size}/${ACH.length}</h2>${ACH.map(([id,n])=>`<div class="ach ${G.ach.has(id)?'':'off'}"><span style="font-size:22px">${G.ach.has(id)?'🏆':'🔒'}</span>${n}</div>`).join('')}<button class="big sub" id="cl">閉じる</button>`); c.querySelector('#cl').onclick=closeModal; }
+function showKarte(){ const c=modal(`<h2>📋 カルテ・スタンプ・口コミ</h2>
+  <div class="lead">🐾 犬種スタンプ帳 ${G.stamps.size}/50</div><div class="stamp">${BREEDS.map((b,i)=>`<div class="${G.stamps.has(i)?'on':''}">${G.stamps.has(i)?b[0]:'？'}</div>`).join('')}</div>
+  <div class="lead" style="margin-top:12px">💬 口コミ（評判 ${G.rep}）</div>${G.reviews.length?G.reviews.slice(0,8).map(r=>`<div class="karte"><span>「${r.text}」<br><small style="color:#8a93a5">${r.name}（${r.breed}）</small></span><span style="color:#f5b301">${'★'.repeat(r.st)}</span></div>`).join(''):'<p class="lead">まだありません</p>'}
+  <div class="lead" style="margin-top:12px">📋 対応履歴</div>${G.karte.length?G.karte.slice().reverse().map(k=>`<div class="karte"><span>${k.name}（${k.breed}）<br><small style="color:#8a93a5">${k.topic}</small></span><span style="color:#f5b301">${'★'.repeat(k.st)}</span></div>`).join(''):'<p class="lead">まだありません</p>'}
+  <button class="big sub" id="cl">閉じる</button>`); c.querySelector('#cl').onclick=closeModal; }
+function showMenu(){ const c=modal(`<h2>≡ メニュー</h2><div class="menu">
+   <button id="m1">🛒 ショップ・改装</button><button id="m2">👩‍💼 着せ替え</button>
+   <button id="m3">🏆 実績 ${G.ach.size}/${ACH.length}</button><button id="m4">📋 カルテ・口コミ</button>
+   <button id="m5">${G.night?'☀️ 日勤に切替':'🌙 夜勤に切替'}</button><button id="m6">💡 アイデア50</button>
+   <button id="m7">${muted?'🔇 音を出す':'🔊 消音'}</button><button id="m8">✕ 閉じる</button></div>`);
+  c.querySelector('#m1').onclick=showShop; c.querySelector('#m2').onclick=showCustomize; c.querySelector('#m3').onclick=showAch; c.querySelector('#m4').onclick=showKarte; c.querySelector('#m6').onclick=showIdeas;
+  c.querySelector('#m5').onclick=()=>{ if(C){ toast('通話中は切り替えできません'); return; } setNight(!G.night); closeModal(); toast(G.night?'🌙 夜勤：夜限定の依頼が来ます':'☀️ 日勤シフト'); checkAch(); };
+  c.querySelector('#m7').onclick=()=>{ muted=!muted; ac(); showMenu(); }; c.querySelector('#m8').onclick=closeModal; }
+$('#bMenu').onclick=showMenu; $('#bShop').onclick=showShop;
+
+/* =========================================================
+   ループ
+   ========================================================= */
+const clock=new THREE.Clock(); let lastQ=0;
+function loop(){
+  requestAnimationFrame(loop);
+  const dt=Math.min(clock.getDelta(),0.05); time+=dt; const k=1-Math.exp(-dt*12);
+  animateHuman(op,opMotion,time); applyRig(op,k); if(decor.booth.visible){ animateHuman(cow,'phone',time+1.3); applyRig(cow,k); }
+  if(callDog){ animateDog(callDog,dogMotion,time); applyRig(callDog,k); }
+  for(const p of props){
+    if(p.kind==='staff'){ const x=p.obj.position.x; if(x>p.goal+0.01){ p.obj.position.x=Math.max(p.goal,x-dt*1.6); p.m='run'; } else if(p.m==='run'){ p.m='wave'; p.obj.rotation.y=-0.4; p.done&&p.done(); p.done=null; setTimeout(()=>{ p.m='idle'; },2500); }
+      animateHuman(p.rig,p.m,time); applyRig(p.rig,k); }
+    if(p.kind==='senior'){ animateDog(p.rig,'sit',time+3); applyRig(p.rig,k); }
+    if(p.kind==='box'){ if(p.y>p.ground){ p.vy-=dt*9; p.y=Math.max(p.ground,p.y+p.vy*dt); p.obj.position.y=p.y; p.obj.rotation.y+=dt*2; }
+      else if(!p.opened){ p.opened=true; p.t1=time; tone(520,0.1,'square',0.04); }
+      else if(time-p.t1>0.35&&!p.sprite){ p.obj.children.forEach(ch=>ch.visible=false); p.sprite=emojiSprite(p.emoji,p.sz*1.6); p.sprite.position.y=p.sz*0.5; p.obj.add(p.sprite); blip(880); p.done&&p.done(); p.done=null; }
+      if(p.sprite) p.sprite.position.y=p.sz*0.6+Math.sin(time*3)*p.sz*0.08; }
+  }
+  // 待ち列
+  if(C&&!C.ended&&G.queue.length){ for(const q of G.queue) q.pat-=dt*(holdBoost?3:0.35)*(G.endless?1:0.8)*(G.upg.booth?0.5:1);
+    const gone=G.queue.filter(q=>q.pat<=0); if(gone.length){ G.queue=G.queue.filter(q=>q.pat>0); G.missed+=gone.length; gone.forEach(q=>toast(`📴 ${BREEDS[q.breed][0]}の${q.name}が電話を切りました…`)); G.queue.push(mkQueue()); }
+    if(time-lastQ>0.5){ lastQ=time; renderQueue(); } }
+  if(C&&!C.ended){ const s=Math.floor((performance.now()-C.t0)/1000), tm=$('#tm'); if(tm) tm.textContent=`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`; }
+  thunderTick(dt);
+  if(flash>0){ flash-=dt; dHemi.intensity=flash>0?3.5:0.55; dogScene.background.set(flash>0?'#e8ecff':'#1b2140'); }
+  dogCam.position.lerp(camGoal.pos,1-Math.exp(-dt*3)); camTgt.lerp(camGoal.tgt,1-Math.exp(-dt*3)); dogCam.lookAt(camTgt);
+  if(screen.material===screenMat){ renderer.setRenderTarget(rt); renderer.render(dogScene,dogCam); renderer.setRenderTarget(null); }
+  renderer.render(scene,camera);
+}
+screen.material=standbyMat;
+hud(); title(); loop();
+</script>
+</body>
+</html>
+
