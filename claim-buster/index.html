@@ -1,0 +1,1770 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>クレーム撃退コールセンター</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;background:#eef3f8;color:#26303c;overflow:hidden}
+#app{display:flex;flex-direction:column;height:100%}
+#stage{position:relative;height:44vh;min-height:250px;flex:none}
+#c{display:block;width:100%;height:100%;touch-action:none}
+#hud{position:absolute;inset:0;pointer-events:none;font-size:11.5px;line-height:1.3}
+#hud .hl{position:absolute;left:8px;top:6px;display:flex;gap:6px;flex-wrap:wrap;max-width:48%}
+#hud .hl span{background:rgba(255,255,255,.88);border-radius:999px;padding:2px 8px;font-weight:800}
+#hud .hl .cb{background:#ff7a1a;color:#fff}
+#hud .hm{position:absolute;left:8px;bottom:6px;width:44%;background:rgba(255,255,255,.88);border-radius:10px;padding:4px 7px;font-weight:700}
+#hud .hr{position:absolute;right:6px;bottom:6px;width:50%;background:rgba(255,255,255,.9);border-radius:10px;padding:5px 7px;font-weight:700}
+#hud .cn{font-size:12.5px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar{height:8px;background:#dde3ea;border-radius:99px;overflow:hidden;margin-top:2px}
+.bar i{display:block;height:100%;border-radius:99px;transition:width .35s}
+.tg{display:inline-block;border-radius:6px;padding:0 4px;color:#fff;font-size:10.5px;margin:1px 1px 0 0}
+.tg.q{background:#9aa6b4}.tg.rs{background:#fff;color:#c33;border:1px solid #c33}
+.wk{margin-top:2px}
+#pop{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.popt{font-size:34px;font-weight:900;color:#fff;-webkit-text-stroke:2px #2a4a7a;text-shadow:0 4px 0 #2a4a7a;animation:pop .5s ease-out;letter-spacing:.05em}
+.popt.win{-webkit-text-stroke-color:#d0901a;text-shadow:0 4px 0 #d0901a}.popt.fire{-webkit-text-stroke-color:#c02020;text-shadow:0 4px 0 #c02020}
+@keyframes pop{0%{transform:scale(.2) rotate(-10deg);opacity:0}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+#ui{flex:1;overflow-y:auto;padding:8px 10px 30px;background:#f6f9fc;border-top:2px solid #d4dee9}
+.card{background:#fff;border-radius:16px;padding:12px;margin:0 0 10px;box-shadow:0 2px 8px rgba(30,60,100,.07)}
+.center{text-align:center}
+.big{font-size:20px;font-weight:900;margin:4px 0 6px}.big small{font-size:13px;color:#7a8a9a}
+.big2{font-size:18px!important;padding:14px 18px!important}
+.red{color:#e04848}.green{color:#2a9a5a}
+.note{font-size:12px;color:#6a7a8a;line-height:1.55}
+.btn{display:block;width:100%;border:0;background:#2a6ad0;color:#fff;font:inherit;font-weight:800;font-size:15px;padding:11px;border-radius:12px;margin:7px 0 0;box-shadow:0 3px 0 #1a4a9a}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 #1a4a9a}
+.btn.sub{background:#e6edf5;color:#2a3a4a;box-shadow:0 3px 0 #c8d4e2}
+.row3{display:flex;gap:8px}.row3 .btn{flex:1}
+.logo{font-size:28px;font-weight:900;line-height:1.15;color:#2a4a7a;margin:6px 0;text-shadow:0 3px 0 #cfe0f5}
+.opsel{display:flex;align-items:center;justify-content:space-between;background:#eef3f8;border-radius:12px;padding:6px;margin:8px 0}
+.arrow{border:0;background:#fff;border-radius:10px;width:44px;height:40px;font-size:16px}
+.boss{background:#fff1f0;border:2px dashed #e04848;border-radius:12px;padding:8px;margin:8px 0}
+.evi{font-size:56px}
+.ring .phone{font-size:60px;animation:rg .25s infinite alternate}
+@keyframes rg{from{transform:rotate(-14deg)}to{transform:rotate(14deg)}}
+.talk{margin-bottom:6px}
+.bubble{background:#fff;border-radius:14px;padding:8px 11px;margin:0 0 6px;font-size:14px;line-height:1.5;box-shadow:0 1px 4px rgba(0,0,0,.06);font-weight:700}
+.bubble.cl{border-left:5px solid #e04848}.bubble.op{border-left:5px solid #2a6ad0;font-weight:500;font-size:13px;color:#3a4a5a}
+.res{font-size:12.5px;padding:6px 9px;border-radius:10px;background:#eef3f8;font-weight:700;line-height:1.5}
+.res.good,.res.great{background:#e6f7ec;color:#1a7a4a}.res.bad{background:#fdeaea;color:#c02a2a}
+.chhead{font-size:12px;font-weight:800;color:#6a7a8a;margin:8px 0 5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.mini{border:0;background:#fff3d6;border-radius:8px;padding:3px 8px;font:inherit;font-size:12px;font-weight:800}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.ch{position:relative;text-align:left;border:1.5px solid #d4dee9;background:#fff;border-radius:12px;padding:8px 8px 7px;font:inherit;color:#26303c;min-height:56px}
+.ch b{display:block;font-size:13px;line-height:1.3}
+.ch small{display:block;font-size:10.5px;color:#7a8a9a;margin-top:3px;line-height:1.3}
+.ch:active{background:#eef3f8}
+.ch.good{border-color:#2a9a5a;background:#f0fbf4}.ch.bad{border-color:#e8a0a0;background:#fff6f6}
+.ch .mk{position:absolute;right:6px;top:4px;font-weight:900;color:#2a9a5a}.ch.bad .mk{color:#d04040}
+.ch:disabled{opacity:.45}
+.tbl{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0}.tbl td{padding:5px 4px;border-bottom:1px solid #eef2f6}.tbl td:last-child{text-align:right;font-weight:800}
+.score{font-size:44px;font-weight:900;color:#2a4a7a}.score small{font-size:16px}
+.shop{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.item{border:1.5px solid #d4dee9;background:#fff;border-radius:12px;padding:7px;text-align:left;font:inherit;color:#26303c;display:flex;flex-direction:column;gap:2px}
+.item .ii{font-size:22px}.item b{font-size:12.5px}.item small{font-size:10.5px;color:#7a8a9a;line-height:1.3}.item .pr{font-size:12px;font-weight:800;color:#d0901a;margin-top:auto}
+.item.own{background:#f0fbf4;border-color:#9ad0b0}.item:disabled{opacity:.55}
+.dex{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.dx{background:#f6f9fc;border-radius:12px;padding:7px;font-size:12px;line-height:1.35}.dx .de{font-size:28px}.dx small{display:block;color:#6a7a8a;font-size:10.5px}
+.dx.unk{opacity:.55}
+.ac{background:#f6f9fc;border-radius:10px;padding:7px 9px;margin:5px 0;font-size:13px}.ac.unk{opacity:.5}
+details{background:#f6f9fc;border-radius:10px;padding:7px 10px;margin:6px 0;font-size:12.5px}
+summary{font-weight:800;font-size:13.5px}
+details ol{padding-left:22px;margin:6px 0}details li{margin:2px 0;line-height:1.45}
+.how{padding-left:20px;font-size:13.5px;line-height:1.6}.how li{margin:4px 0}
+.lbl{font-size:12px;font-weight:800;color:#7a8a9a;margin:8px 0 4px}
+.chips{display:flex;flex-wrap:wrap;gap:5px}.chips.scroll{max-height:150px;overflow-y:auto}
+.chip{border:1.5px solid #d4dee9;background:#fff;border-radius:999px;padding:5px 10px;font:inherit;font-size:12.5px;color:#26303c}
+.chip.on{background:#2a4a7a;border-color:#2a4a7a;color:#fff}.chip.mot{border-radius:9px}
+.toast{position:fixed;left:50%;top:12px;transform:translateX(-50%);background:#26303c;color:#fff;padding:9px 16px;border-radius:999px;font-size:13px;font-weight:800;z-index:9;animation:pop .3s}
+
+#hud .top{position:absolute;left:0;right:0;top:0;display:flex;gap:4px;align-items:center;padding:5px 6px;background:linear-gradient(rgba(255,255,255,.92),rgba(255,255,255,.75));font-weight:800;font-size:11.5px;white-space:nowrap;overflow:hidden}
+#hud .top span{background:#eef3f8;border-radius:999px;padding:2px 7px}
+#hud .top .cb{background:#ff7a1a;color:#fff}
+#hud .top .mt{flex:1;min-width:58px;display:flex;align-items:center;gap:4px}#hud .top .mt .bar{flex:1;margin:0}
+.sbub{position:absolute;left:0;top:0;display:none;max-width:60%;background:#fff;border:2.5px solid #e04848;border-radius:14px;padding:6px 10px 7px;font-size:13.5px;font-weight:800;line-height:1.4;color:#222;pointer-events:none;box-shadow:0 3px 10px rgba(0,0,0,.15);z-index:3}
+.sbub b{display:block;font-size:10.5px;color:#e04848;margin-bottom:1px}
+.sbub::after{content:"";position:absolute;bottom:-11px;left:calc(var(--tx,30px) - 9px);border:9px solid transparent;border-top-color:#e04848;border-bottom:0}
+.sbub.op{border-color:#2a6ad0;font-size:12.5px;max-width:46%}.sbub.op b{color:#2a6ad0}.sbub.op::after{border-top-color:#2a6ad0}
+.sbub.popin{animation:pop .25s ease-out}
+.logwrap{background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(30,60,100,.07);overflow:hidden}
+.loghead{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:#2a4a7a;color:#fff;font-weight:800;font-size:12.5px}
+.loghead .mini{background:rgba(255,255,255,.2);color:#fff}
+.log{max-height:31vh;overflow-y:auto;padding:8px 8px 4px;background:#e9eff6}
+.msg{display:flex;gap:6px;margin:0 0 8px;align-items:flex-start}
+.msg .av{flex:none;width:34px;height:34px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.msg .mb{max-width:80%}.msg .nm{font-size:10.5px;font-weight:800;color:#6a7a8a;margin:0 0 2px 4px}
+.msg .bb{background:#fff;border-radius:4px 14px 14px 14px;padding:7px 10px;font-size:14px;font-weight:700;line-height:1.45;border:2px solid #f0b8b8}
+.msg.op{flex-direction:row-reverse}.msg.op .nm{text-align:right;margin:0 4px 2px 0}
+.msg.op .bb{background:#d6ecff;border:2px solid #9ac8f0;border-radius:14px 4px 14px 14px;font-weight:600}
+.msg.op .av{background:#2a6ad0}
+.sys{margin:2px auto 8px;max-width:94%;text-align:center;font-size:11.5px;font-weight:800;color:#556;background:rgba(255,255,255,.7);border-radius:999px;padding:4px 10px;line-height:1.4}
+.sys.good,.sys.great{color:#1a7a4a;background:#dff5e8}.sys.bad{color:#c02a2a;background:#fde4e4}
+.ch.force{border-color:#f0a090;background:#fff7f2}.ch.force b::before{content:"💥 "}
+.ch.toxic{border-color:#c8a0d8;background:#faf4fd}.ch.toxic b::before{content:"🗯️ "}
+.popt.fx{font-size:30px;-webkit-text-stroke-color:#b02020;text-shadow:0 4px 0 #b02020}
+@media (min-width:900px){
+  #app{flex-direction:row}
+  #stage{flex:1;height:100%}
+  #ui{flex:none;width:440px;border-top:0;border-left:2px solid #d4dee9}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage"><canvas id="c"></canvas><div id="hud"></div><div id="sbOp" class="sbub op"></div><div id="sbCl" class="sbub"></div><div id="pop"></div></div>
+  <div id="ui"></div>
+</div>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+/* =========================================================
+   共通ユーティリティ（わんわんコール 3Dモデル工房のデフォルメ人間がベース）
+   ========================================================= */
+const _e = new THREE.Euler(0,0,0,'YXZ');
+function shade(hex,a){ const c=new THREE.Color(hex); const t=a<0?new THREE.Color(0,0,0):new THREE.Color(1,1,1); c.lerp(t,Math.abs(a)); return '#'+c.getHexString(); }
+function track(rig,o,rx=0,ry=0,rz=0){
+  o.userData.re=new THREE.Euler(rx,ry,rz,'YXZ');
+  o.userData.rest=o.position.clone();
+  o.userData.tp=o.position.clone();
+  o.userData.tq=new THREE.Quaternion().setFromEuler(o.userData.re);
+  o.quaternion.copy(o.userData.tq);
+  rig.nodes.push(o); return o;
+}
+function rot(o,x=0,y=0,z=0){ const r=o.userData.re; _e.set(r.x+x,r.y+y,r.z+z,'YXZ'); o.userData.tq.setFromEuler(_e); }
+function pos(o,dx=0,dy=0,dz=0){ o.userData.tp.copy(o.userData.rest); o.userData.tp.x+=dx; o.userData.tp.y+=dy; o.userData.tp.z+=dz; }
+function resetRig(rig){ for(const o of rig.nodes){ rot(o); o.userData.tp.copy(o.userData.rest); } }
+function applyRig(rig,k){ for(const o of rig.nodes){ o.quaternion.slerp(o.userData.tq,k); o.position.lerp(o.userData.tp,k); } }
+function snapRig(rig){ for(const o of rig.nodes){ o.quaternion.copy(o.userData.tq); o.position.copy(o.userData.tp); } }
+function disposeRig(rig){ rig.root.traverse(n=>{ if(n.geometry) n.geometry.dispose(); }); for(const k in rig.faceCache){ rig.faceCache[k].open.dispose(); rig.faceCache[k].closed.dispose(); } }
+const matCache={};
+function mat(hex,opt){ const k=hex+(opt?JSON.stringify(opt):''); if(!matCache[k]) matCache[k]=new THREE.MeshStandardMaterial(Object.assign({color:hex,roughness:0.62,metalness:0},opt||{})); return matCache[k]; }
+function cube(w,h,d,hex){ const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),typeof hex==='string'?mat(hex,{roughness:0.8}):hex); m.castShadow=true; return m; }
+function sp(r,phi,theta){ return new THREE.Vector3(-Math.cos(phi)*Math.sin(theta),Math.cos(theta),Math.sin(phi)*Math.sin(theta)).multiplyScalar(r); }
+function capsule(r,h,m){ let g; if(h>2*r+0.001) g=new THREE.CapsuleGeometry(r,h-2*r,6,16); else { g=new THREE.SphereGeometry(r,20,14); g.scale(1,h/(2*r),1); } const me=new THREE.Mesh(g,m); me.castShadow=true; me.receiveShadow=true; return me; }
+function at(m,x,y,z){ m.position.set(x,y,z); return m; }
+function sph(r,m,ws=24,hs=16){ const me=new THREE.Mesh(new THREE.SphereGeometry(r,ws,hs),m); me.castShadow=true; return me; }
+function cyl(rt,rb,h,m,seg=20,open=false){ const me=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg,1,open),m); me.castShadow=true; return me; }
+function cone(r,h,m,seg=12){ const me=new THREE.Mesh(new THREE.ConeGeometry(r,h,seg),m); me.castShadow=true; return me; }
+function partSphere(r,m,ps,pl,ts,tl){ const me=new THREE.Mesh(new THREE.SphereGeometry(r,40,24,ps,pl,ts,tl),m); me.castShadow=true; return me; }
+function rodBetween(a,b,r,m){ const d=b.clone().sub(a); const c=cyl(r,r,d.length(),m,8); c.position.copy(a).add(b).multiplyScalar(0.5); c.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize()); return c; }
+
+/* =========================================================
+   人間：デフォルメキャラ（パーツ拡張版）
+   ========================================================= */
+const HUMAN_DEF={heads:3,height:1,build:1,skin:'#ffe0c9',hair:'short',hairC:'#4a3426',eyes:'round',eyeC:'#3a2618',brows:'normal',mouth:'smile',blush:true,
+  hat:'none',hatC:'#8a8296',top:'hoodie',topC:'#efeae6',accC:'#8a8296',bottom:'pants',botC:'#4a4650',shoes:'sneaker',shoeC:'#ffffff',sockC:'#ffffff',acc:[],prop:'none',propC:null,wrinkle:false};
+const PARTS={
+  hair:[['short','ショート'],['bob','ボブ'],['long','ロング'],['ponytail','ポニテ'],['twintail','ツインテ'],['bun','おだんご'],['spiky','ツンツン'],['curly','くせ毛'],['mohawk','モヒカン'],['slick','オールバック'],['perm','パーマ'],['afro','アフロ'],['barcode','バーコード'],['bald','つるつる'],['none','なし']],
+  eyes:[['round','まる目'],['sparkle','キラキラ'],['sharp','つり目'],['sleepy','たれ目'],['smile','にっこり'],['wink','ウインク'],['dot','てん目']],
+  brows:[['normal','ふつう'],['worried','困り眉'],['angry','怒り眉'],['thick','太眉'],['none','なし']],
+  mouth:[['smile','にこ'],['grin','にかっ'],['fang','八重歯'],['cat','ω'],['o','おっ'],['flat','むっ'],['frown','への字'],['yell','怒鳴り'],['wavy','わなわな']],
+  hat:[['none','なし'],['cap','キャップ'],['beanie','ニット帽'],['beret','ベレー'],['hood_cat','けもフード'],['hood_bear','くまフード'],['hood_rabbit','うさフード'],['catband','ネコ耳'],['ribbon','リボン'],['hachimaki','はちまき'],['crown','王冠'],['tiara','ティアラ']],
+  top:[['hoodie','パーカー'],['tshirt','Tシャツ'],['jacket','ジャケット'],['tank','タンクトップ'],['sweater','セーター'],['dress','ワンピース'],['suit','スーツ'],['shirt','ワイシャツ'],['apron','前掛け'],['vest','制服ベスト']],
+  bottom:[['shorts','ショートパンツ'],['pants','ロングパンツ'],['cargo','カーゴ'],['skirt','スカート']],
+  shoes:[['sneaker','スニーカー'],['boots','ブーツ'],['sandal','サンダル'],['loafer','革靴']],
+  acc:[['headset','ヘッドセット'],['headphones','ヘッドホン'],['glasses','メガネ'],['sunglasses','サングラス'],['mustache','口ひげ'],['beard','あごひげ'],['tie','ネクタイ'],['bowtie','蝶ネクタイ'],['scarf','マフラー'],['pearls','真珠'],['badge','バッジ'],['cape','マント'],['horns','ツノ'],['antenna','触角'],['baby','抱っこ紐'],['bag','ショルダー'],['backpack','リュック'],['tail','しっぽ'],['namecard','社員証']],
+  prop:[['none','なし'],['phone2','スマホ2台目'],['tablet','タブレット'],['book','規約集'],['cane','杖'],['megaphone','メガホン'],['beer','ジョッキ'],['mic','マイク'],['dumbbell','ダンベル'],['chili','唐辛子'],['crystal','水晶玉'],['controller','コントローラー'],['pen','羽ペン'],['heart','ハート'],['broccoli','ブロッコリー'],['ramen','ラーメン'],['fan','扇子'],['harisen','ハリセン'],['hammer','金づち'],['flag','旗'],['cat','ねこ'],['cup','湯のみ'],['receipt','レシート'],['coin','コイン'],['scepter','王笏']],
+};
+/* 表情（顔テクスチャ差し替え） */
+const EXPR={
+  normal:{}, angry:{brows:'angry',eyes:'sharp',mouth:'yell',vein:1}, grumpy:{brows:'angry',mouth:'frown'},
+  calm:{brows:'normal',eyes:'smile',mouth:'smile',blush:true}, happy:{eyes:'smile',mouth:'grin',blush:true},
+  dizzy:{eyes:'spiral',mouth:'wavy',brows:'worried'}, cry:{eyes:'cross',mouth:'yell',brows:'worried',tears:1},
+  worried:{brows:'worried',mouth:'wavy',sweat:1}, shock:{eyes:'dot',mouth:'o',brows:'worried',sweat:1},
+};
+const EXPR_NAMES=[['normal','ふつう'],['angry','激怒'],['grumpy','不機嫌'],['calm','おだやか'],['happy','ごきげん'],['dizzy','目が回る'],['cry','号泣'],['worried','焦り'],['shock','ガーン']];
+
+/* ---------- 顔テクスチャ ---------- */
+const FACE_W=256;
+function drawFace(cv,H0,closed,ex){
+  const H=Object.assign({},H0,ex||{});
+  if(H0.eyes==='dot'&&['sharp','smile'].includes(H.eyes)) H.eyes='dot';
+  const g=cv.getContext('2d'); g.clearRect(0,0,FACE_W,FACE_W);
+  const ink='#3a2620', exx=47, ey=104;
+  g.lineCap='round'; g.lineJoin='round';
+  const ell=(x,y,rx,ry,fill)=>{ g.fillStyle=fill; g.beginPath(); g.ellipse(x,y,rx,ry,0,0,Math.PI*2); g.fill(); };
+  if(H.blush) for(const s of [-1,1]) ell(128+s*74,142,21,11,'rgba(255,110,130,0.38)');
+  if(H.wrinkle){ g.strokeStyle='rgba(120,70,50,.45)'; g.lineWidth=3; for(const s of [-1,1]){ g.beginPath(); g.moveTo(128+s*80,96); g.lineTo(128+s*90,90); g.moveTo(128+s*80,104); g.lineTo(128+s*92,104); g.stroke(); g.beginPath(); g.arc(128+s*30,170,14,s>0?Math.PI*1.6:Math.PI*1.1,s>0?Math.PI*1.9:Math.PI*1.4); g.stroke(); } }
+  // 眉
+  if(H.brows!=='none'){ g.strokeStyle=shade(H.hairC==='none'?'#5a4030':H.hairC,-0.35); g.lineWidth=H.brows==='thick'?11:6;
+    for(const s of [-1,1]){ const x=128+s*exx; let yi=64,yo=60;
+      if(H.brows==='worried'){yi=53;yo=64;} if(H.brows==='angry'){yi=70;yo=50;}
+      g.beginPath(); g.moveTo(x-s*15,yi); g.quadraticCurveTo(x,Math.min(yi,yo)-4,x+s*15,yo); g.stroke(); } }
+  // 目
+  const eye=(x,rx,ry,dy=0)=>{ const y=ey+dy;
+    ell(x,y,rx,ry,'#2a1c15'); ell(x,y+ry*0.22,rx*0.8,ry*0.68,H.eyeC); ell(x,y+ry*0.3,rx*0.4,ry*0.36,shade(H.eyeC,-0.5));
+    ell(x-rx*0.3,y-ry*0.36,rx*0.38,ry*0.3,'#fff'); ell(x+rx*0.38,y+ry*0.46,rx*0.17,rx*0.17,'#fff');
+    g.strokeStyle='#2a1c15'; g.lineWidth=5; g.beginPath(); g.ellipse(x,y,rx+1.5,ry+1.5,0,Math.PI*1.12,Math.PI*1.88); g.stroke(); };
+  for(const s of [-1,1]){
+    const x=128+s*exx;
+    let t=closed?'blink':H.eyes; if(H.eyes==='wink'&&s===1) t='smile'; else if(H.eyes==='wink') t=closed?'blink':'round';
+    if(closed&&['spiral','cross'].includes(H.eyes)) t=H.eyes;
+    g.strokeStyle=ink; g.lineWidth=6;
+    if(t==='blink'){ g.beginPath(); g.moveTo(x-15,ey+5); g.quadraticCurveTo(x,ey+13,x+15,ey+5); g.stroke(); }
+    else if(t==='smile'){ g.beginPath(); g.arc(x,ey+12,15,Math.PI*1.15,Math.PI*1.85); g.stroke(); }
+    else if(t==='round') eye(x,17,26);
+    else if(t==='sparkle'){ eye(x,18,27); g.fillStyle='#fff'; const sx=x+6,sy=ey+2; g.beginPath(); g.moveTo(sx,sy-8); g.lineTo(sx+2.5,sy-2.5); g.lineTo(sx+8,sy); g.lineTo(sx+2.5,sy+2.5); g.lineTo(sx,sy+8); g.lineTo(sx-2.5,sy+2.5); g.lineTo(sx-8,sy); g.lineTo(sx-2.5,sy-2.5); g.closePath(); g.fill(); }
+    else if(t==='sharp'){ eye(x,16,21,4); g.strokeStyle='#2a1c15'; g.lineWidth=7; g.beginPath(); g.moveTo(x-s*19,ey-10); g.lineTo(x+s*19,ey-20); g.stroke(); }
+    else if(t==='sleepy'){ g.save(); g.beginPath(); g.rect(x-30,ey-4,60,50); g.clip(); eye(x,17,24); g.restore(); g.strokeStyle='#2a1c15'; g.lineWidth=6; g.beginPath(); g.moveTo(x-19,ey-3); g.quadraticCurveTo(x,ey-9,x+19,ey-3); g.stroke(); }
+    else if(t==='dot'){ ell(x,ey+4,8,10,'#2a1c15'); ell(x-3,ey,3,3,'#fff'); }
+    else if(t==='spiral'){ g.lineWidth=4; g.beginPath(); for(let a=0;a<Math.PI*5;a+=0.2){ const r=2+a*1.3; const px=x+Math.cos(a)*r, py=ey+4+Math.sin(a)*r; a===0?g.moveTo(px,py):g.lineTo(px,py);} g.stroke(); }
+    else if(t==='cross'){ g.lineWidth=6; g.beginPath(); g.moveTo(x-s*14,ey-8); g.lineTo(x+s*10,ey+4); g.lineTo(x-s*14,ey+16); g.stroke(); }
+  }
+  if(H.tears){ g.fillStyle='rgba(110,180,255,.85)'; for(const s of [-1,1]){ g.beginPath(); g.moveTo(128+s*47,ey+20); g.quadraticCurveTo(128+s*62,ey+70,128+s*50,ey+95); g.quadraticCurveTo(128+s*36,ey+70,128+s*47,ey+20); g.fill(); } }
+  if(H.sweat){ g.fillStyle='rgba(120,190,255,.9)'; g.beginPath(); g.moveTo(206,40); g.quadraticCurveTo(222,70,206,78); g.quadraticCurveTo(190,70,206,40); g.fill(); }
+  if(H.vein){ g.strokeStyle='#e0303a'; g.lineWidth=6; const vx=196,vy=36;
+    for(let k=0;k<4;k++){ const a=k*Math.PI/2+Math.PI/4; g.beginPath(); g.moveTo(vx+Math.cos(a)*5,vy+Math.sin(a)*5); g.quadraticCurveTo(vx+Math.cos(a+0.6)*14,vy+Math.sin(a+0.6)*14,vx+Math.cos(a)*18,vy+Math.sin(a)*18); g.stroke(); } }
+  // 口
+  g.strokeStyle=ink; g.lineWidth=5; const my=168;
+  switch(H.mouth){
+    case 'smile': g.beginPath(); g.arc(128,my-10,13,Math.PI*0.2,Math.PI*0.8); g.stroke(); break;
+    case 'grin': g.fillStyle='#7a2d2d'; g.beginPath(); g.moveTo(110,my-2); g.quadraticCurveTo(128,my+30,146,my-2); g.closePath(); g.fill(); ell(128,my+12,9,5.5,'#f08a8a'); g.stroke(); break;
+    case 'fang': g.beginPath(); g.arc(128,my-10,13,Math.PI*0.2,Math.PI*0.8); g.stroke(); g.fillStyle='#fff'; g.beginPath(); g.moveTo(132,my+1); g.lineTo(140,my-1); g.lineTo(137,my+8); g.closePath(); g.fill(); break;
+    case 'cat': g.beginPath(); g.arc(121,my-2,7,0,Math.PI); g.stroke(); g.beginPath(); g.arc(135,my-2,7,0,Math.PI); g.stroke(); break;
+    case 'o': ell(128,my+2,7,9,'#7a2d2d'); break;
+    case 'flat': g.beginPath(); g.moveTo(117,my); g.lineTo(139,my); g.stroke(); break;
+    case 'frown': g.beginPath(); g.arc(128,my+12,14,Math.PI*1.2,Math.PI*1.8); g.stroke(); break;
+    case 'yell': ell(128,my+6,20,16,'#6a2228'); g.fillStyle='#fff'; g.fillRect(112,my-8,32,6); ell(128,my+14,11,6,'#e86a7a'); g.lineWidth=4; g.beginPath(); g.ellipse(128,my+6,20,16,0,0,Math.PI*2); g.stroke(); break;
+    case 'wavy': g.beginPath(); g.moveTo(112,my); for(let i=0;i<=8;i++) g.lineTo(112+i*4,my+(i%2?-5:4)); g.stroke(); break;
+  }
+}
+function getFace(R,ex){
+  if(!R.faceCache[ex]){ const o=document.createElement('canvas'), c=document.createElement('canvas'); o.width=o.height=c.width=c.height=FACE_W;
+    drawFace(o,R.H,false,EXPR[ex]); drawFace(c,R.H,true,EXPR[ex]);
+    const to=new THREE.CanvasTexture(o), tc=new THREE.CanvasTexture(c); to.colorSpace=tc.colorSpace=THREE.SRGBColorSpace;
+    R.faceCache[ex]={open:to,closed:tc}; }
+  return R.faceCache[ex];
+}
+
+/* ---------- 手持ちの小物 ---------- */
+function makeProp(type,hr,R,H){
+  const g=new THREE.Group(), C=H.propC;
+  const M=(c)=>mat(c);
+  switch(type){
+    case 'phone2': case 'tablet': { const w=type==='tablet'?R*0.55:R*0.2, h=type==='tablet'?R*0.4:R*0.36; const b=cube(w,h,R*0.04,'#2f3440'); const s=cube(w*0.88,h*0.85,R*0.01,'#8fd4ff'); s.position.z=R*0.026; b.add(s); b.position.set(0,0,hr*1.1); b.rotation.x=-0.5; g.add(b); break; }
+    case 'book': { const b=cube(R*0.45,R*0.6,R*0.16,C||'#6a2a2a'); b.position.set(0,0,hr*1.2); b.rotation.x=-0.3; g.add(b); const p=cube(R*0.42,R*0.56,R*0.12,'#f5efdf'); p.position.x=R*0.03; b.add(p); break; }
+    case 'cane': { const c=cyl(hr*0.25,hr*0.25,R*3.2,M('#7a5030'),10); c.position.set(0,-R*1.6,hr*0.6); g.add(c); const h=new THREE.Mesh(new THREE.TorusGeometry(hr*0.6,hr*0.25,8,16,Math.PI),M('#7a5030')); h.position.set(hr*0.6,0,hr*0.6); g.add(h); break; }
+    case 'megaphone': { const c=cyl(hr*0.5,hr*1.6,R*0.9,M('#f0f0f0'),16,true); c.material=mat('#f0f0f0',{side:THREE.DoubleSide}); c.rotation.x=Math.PI/2; c.position.set(0,hr*0.5,R*0.55); g.add(c); const r=new THREE.Mesh(new THREE.TorusGeometry(hr*1.6,hr*0.15,6,20),M('#e04040')); r.position.set(0,hr*0.5,R); g.add(r); break; }
+    case 'beer': { const c=cyl(hr*1.0,hr*1.0,hr*2.6,mat('#f2b632',{transparent:true,opacity:0.85}),16); c.position.set(hr*0.3,hr*0.4,hr*1.2); g.add(c); const f=cyl(hr*1.05,hr*1.05,hr*0.6,M('#ffffff'),16); f.position.set(hr*0.3,hr*1.9,hr*1.2); g.add(f); break; }
+    case 'mic': { const s=cyl(hr*0.3,hr*0.22,R*0.6,M('#222'),10); s.position.set(0,R*0.2,hr*0.6); s.rotation.x=0.3; g.add(s); const b=sph(hr*0.6,mat('#cccccc',{metalness:0.6,roughness:0.3})); b.position.set(0,R*0.5,hr*0.75); g.add(b); break; }
+    case 'dumbbell': { const b=cyl(hr*0.25,hr*0.25,R*0.8,M('#555'),8); b.rotation.z=Math.PI/2; g.add(b); for(const s of [-1,1]){ const w=cyl(hr*0.9,hr*0.9,hr*0.7,M('#222'),14); w.rotation.z=Math.PI/2; w.position.x=s*R*0.38; g.add(w);} break; }
+    case 'chili': { const c=cone(hr*0.6,R*0.7,mat('#e8261c'),10); c.rotation.x=Math.PI*0.6; c.position.set(0,0,hr*1.4); g.add(c); const st=cyl(hr*0.15,hr*0.15,hr*0.8,M('#3a8a2a'),6); st.position.set(0,hr*0.4,hr*0.6); g.add(st); break; }
+    case 'crystal': { const b=sph(R*0.3,mat('#b89af0',{transparent:true,opacity:0.75,roughness:0.1,emissive:'#5a3aa0',emissiveIntensity:0.4})); b.position.set(0,R*0.32,hr*0.9); g.add(b); break; }
+    case 'controller': { const b=cube(R*0.5,R*0.12,R*0.25,'#333'); b.position.set(0,0,hr*1.0); g.add(b); for(const s of [-1,1]){ const k=sph(R*0.05,mat(s>0?'#e04848':'#48a0e0')); k.position.set(s*R*0.14,R*0.07,0); b.add(k);} break; }
+    case 'pen': { const p=cyl(hr*0.1,hr*0.1,R*0.5,M('#3a2a20'),6); p.position.set(0,R*0.15,hr*0.6); g.add(p); const f=cone(hr*0.5,R*0.55,M('#ffffff'),8); f.position.set(0,R*0.5,hr*0.6); g.add(f); break; }
+    case 'heart': { const m=mat('#ff5a8a'); for(const s of [-1,1]){ const b=sph(R*0.16,m); b.position.set(s*R*0.12,R*0.38,hr*0.9); g.add(b);} const c=cone(R*0.26,R*0.3,m,12); c.rotation.x=Math.PI; c.position.set(0,R*0.2,hr*0.9); g.add(c); break; }
+    case 'broccoli': { const st=cyl(hr*0.35,hr*0.45,R*0.35,M('#9ccc65'),8); st.position.set(0,R*0.1,hr*0.8); g.add(st); for(let i=0;i<5;i++){ const b=sph(R*0.14,M('#3d8b37'),10,8); b.position.set(Math.cos(i*1.26)*R*0.12,R*0.35+(i%2)*R*0.05,hr*0.8+Math.sin(i*1.26)*R*0.12); g.add(b);} break; }
+    case 'ramen': { const b=cyl(R*0.32,R*0.2,R*0.25,M('#c8102e'),18); b.position.set(0,R*0.1,hr*1.4); g.add(b); const s=cyl(R*0.3,R*0.3,R*0.02,M('#e8c070'),18); s.position.set(0,R*0.22,hr*1.4); g.add(s); for(const s2 of [-1,1]){ const ch=rodBetween(new THREE.Vector3(s2*R*0.05,R*0.2,hr*1.4),new THREE.Vector3(s2*R*0.08,R*0.7,hr*1.1),hr*0.08,M('#d8b27a')); g.add(ch);} break; }
+    case 'fan': case 'harisen': { const m=mat(type==='fan'?(C||'#e84d5b'):'#f5f5f0',{side:THREE.DoubleSide}); const f=new THREE.Mesh(new THREE.CircleGeometry(R*(type==='fan'?0.5:0.75),16,Math.PI*0.25,Math.PI*0.5),m); f.position.set(0,0,hr*0.6); f.castShadow=true; g.add(f); break; }
+    case 'hammer': { const h=cyl(hr*0.25,hr*0.25,R*0.7,M('#a0703a'),8); h.position.set(0,R*0.2,hr*0.5); g.add(h); const hd=cube(R*0.4,R*0.15,R*0.15,'#555'); hd.position.set(0,R*0.55,hr*0.5); g.add(hd); break; }
+    case 'flag': { const p=cyl(hr*0.12,hr*0.12,R*1.6,M('#ccc'),6); p.position.set(0,R*0.6,hr*0.5); g.add(p); const f=cube(R*0.7,R*0.45,R*0.01,C||'#e84d5b'); f.position.set(R*0.36,R*1.18,hr*0.5); g.add(f); break; }
+    case 'cat': { const cm=M(C||'#f2a65a'); const b=sph(R*0.25,cm); b.scale.set(1,0.8,1.3); b.position.set(0,R*0.05,hr*1.6); g.add(b); const h=sph(R*0.2,cm); h.position.set(0,R*0.28,hr*1.6+R*0.3); g.add(h); for(const s of [-1,1]){ const e=cone(R*0.07,R*0.14,cm,8); e.position.set(s*R*0.11,R*0.46,hr*1.6+R*0.3); g.add(e);} break; }
+    case 'cup': { const c=cyl(hr*0.8,hr*0.65,hr*1.5,M(C||'#6a8a5a'),14); c.position.set(0,hr*0.3,hr*1.0); g.add(c); break; }
+    case 'receipt': { const r=cube(R*0.25,R*0.6,R*0.005,'#ffffff'); r.position.set(0,R*0.2,hr*1.0); g.add(r); break; }
+    case 'coin': { const c=cyl(R*0.2,R*0.2,R*0.05,mat('#f2c94c',{metalness:0.7,roughness:0.3}),20); c.rotation.x=Math.PI/2; c.position.set(0,R*0.15,hr*1.0); g.add(c); break; }
+    case 'scepter': { const p=cyl(hr*0.2,hr*0.2,R*1.8,mat('#d4a020',{metalness:0.7,roughness:0.3}),8); p.position.set(0,R*0.4,hr*0.5); g.add(p); const j=sph(R*0.2,mat('#e0303a',{emissive:'#a00',emissiveIntensity:0.4})); j.position.set(0,R*1.35,hr*0.5); g.add(j); break; }
+  }
+  return g;
+}
+
+/* ---------- 人間の組み立て ---------- */
+function buildHuman(H0){
+  const H=Object.assign({},HUMAN_DEF,H0); H.acc=H.acc||[];
+  const T=1.5*H.height, n=H.heads, R=T/(2*n);
+  const rem=T-1.85*R, legLen=rem*0.5, torsoLen=rem*0.42, neckLen=rem*0.08;
+  const tw=(0.075*T+0.25*R)*H.build;
+  const armR=tw*0.3, upper=torsoLen*0.5, fore=torsoLen*0.46, handR=armR*1.35;
+  const legR=tw*0.42, footH=Math.max(legR*1.15,legLen*0.1), thigh=(legLen-footH)/2, shin=thigh;
+  const rig={type:'human',H,nodes:[],faceCache:{},expr:'normal',motion:'idle',mstart:0,
+    dims:{T,R,tw,torsoLen,neckLen,legLen,upper,fore,handR,armR,legR,thigh,footH,headY:torsoLen+neckLen+0.85*R}};
+  const root=new THREE.Group(); rig.root=root;
+  const mSkin=mat(H.skin), mTop=mat(H.topC), mAcc=mat(H.accC), mBot=mat(H.botC), mHair=mat(H.hairC), mHat=mat(H.hatC),
+        mShoe=mat(H.shoeC), mSock=mat(H.sockC), mWhite=mat('#f7f5f2'), mGold=mat('#e2b33c',{metalness:0.65,roughness:0.3});
+  const mHairD=mat(H.hairC,{side:THREE.DoubleSide}), mHatD=mat(H.hatC,{side:THREE.DoubleSide});
+  const mover=track(rig,new THREE.Group()); root.add(mover); rig.mover=mover;
+  const hips=new THREE.Group(); hips.position.y=legLen; mover.add(hips); track(rig,hips); rig.hips=hips;
+  const torso=new THREE.Group(); hips.add(torso); track(rig,torso); rig.torso=torso;
+  const dress=H.top==='dress';
+  // 胴
+  const tm=capsule(tw,torsoLen+tw*0.25,mTop); tm.scale.z=0.72; tm.position.y=torsoLen/2; torso.add(tm);
+  const pel=sph(tw*1.02,dress?mTop:mBot); pel.scale.set(1,0.55,0.74); pel.position.y=0.02; hips.add(pel);
+  const fz=tw*0.72;
+  const tie=(c,y0=0.95,len=0.6)=>{ const k=cube(tw*0.16,tw*0.14,tw*0.06,c); k.position.set(0,torsoLen*y0,fz*1.02); torso.add(k);
+    const b=cube(tw*0.2,torsoLen*len,tw*0.04,c); b.position.set(0,torsoLen*(y0-len/2-0.03),fz*1.0+tw*0.02); b.rotation.x=-0.08; torso.add(b); };
+  if(H.top==='hoodie'){
+    const hood=sph(tw*0.95,mTop); hood.scale.set(1.15,0.55,0.7); hood.position.set(0,torsoLen*0.97,-tw*0.55); torso.add(hood);
+    const pk=cube(tw*1.1,torsoLen*0.22,0.01,H.accC); pk.position.set(0,torsoLen*0.28,fz*0.97); torso.add(pk);
+    for(const s of [-1,1]){ const st=cyl(tw*0.03,tw*0.03,torsoLen*0.28,mAcc,8); st.position.set(s*tw*0.22,torsoLen*0.72,fz*0.98); torso.add(st); const b=sph(tw*0.06,mAcc,8,6); b.position.set(s*tw*0.22,torsoLen*0.57,fz); torso.add(b); }
+  }
+  if(H.top==='jacket'||H.top==='suit'){
+    const inner=cube(tw*0.55,torsoLen*0.95,0.01,H.top==='suit'?'#f7f7f7':H.accC); inner.position.set(0,torsoLen*0.5,fz*0.985); torso.add(inner);
+    const col=new THREE.Mesh(new THREE.TorusGeometry(tw*0.42,tw*0.11,8,20),mTop); col.rotation.x=Math.PI/2; col.position.y=torsoLen*0.98; col.scale.z=0.8; torso.add(col);
+    if(H.top==='suit'){ for(const s of [-1,1]){ const l=cube(tw*0.16,torsoLen*0.6,tw*0.03,shade(H.topC,-0.18)); l.position.set(s*tw*0.3,torsoLen*0.66,fz*1.0); l.rotation.z=s*0.25; torso.add(l);}
+      for(let i=0;i<2;i++){ const b=sph(tw*0.05,mat('#222'),8,6); b.position.set(tw*0.12,torsoLen*(0.3-i*0.15),fz*1.01); torso.add(b);}
+      if(!H.acc.includes('bowtie')) tie(H.accC); }
+  }
+  if(H.top==='shirt'||H.top==='vest'){
+    for(const s of [-1,1]){ const c=cube(tw*0.32,tw*0.14,tw*0.08,H.top==='vest'?'#ffffff':shade(H.topC,0.3)); c.position.set(s*tw*0.2,torsoLen*0.97,fz*0.92); c.rotation.z=s*0.5; torso.add(c); }
+    if(H.top==='vest'){ const v=capsule(tw*1.04,torsoLen*0.8,mAcc); v.scale.z=0.74; v.position.y=torsoLen*0.42; torso.add(v); }
+    if(H.acc.includes('tie')) tie(H.top==='vest'?'#e05a6a':H.accC);
+  }
+  if(H.top==='apron'){ const ap=cube(tw*1.4,torsoLen*0.95+legLen*0.35,tw*0.04,H.accC); ap.position.set(0,torsoLen*0.42-legLen*0.17,fz*1.06); torso.add(ap);
+    const pk=cube(tw*0.7,torsoLen*0.18,tw*0.02,shade(H.accC,-0.15)); pk.position.set(0,torsoLen*0.2,fz*1.09); torso.add(pk); }
+  if(H.top==='sweater'){ const hem=cyl(tw*1.02,tw*1.02,torsoLen*0.12,mat(shade(H.topC,-0.12)),20); hem.scale.z=0.74; hem.position.y=torsoLen*0.08; torso.add(hem); }
+  if(['tshirt','tank','dress','apron'].includes(H.top)){ const nk=cyl(tw*0.36,tw*0.36,0.005,mSkin,16); nk.position.y=torsoLen*1.0; torso.add(nk); }
+  if(dress||H.bottom==='skirt'){
+    const h=legLen*0.46, sk=cyl(tw*0.98,tw*1.65,h,mat(dress?H.topC:H.botC,{side:THREE.DoubleSide}),28,true);
+    sk.scale.z=0.82; sk.position.y=-h/2+tw*0.2; hips.add(sk);
+  }
+  // 首・頭
+  const nk=cyl(tw*0.3,tw*0.3,neckLen+R*0.3,mSkin,12); nk.position.y=torsoLen+neckLen/2; torso.add(nk);
+  const neck=new THREE.Group(); neck.position.y=torsoLen; torso.add(neck); track(rig,neck); rig.neck=neck;
+  const head=new THREE.Group(); head.position.y=neckLen+R*0.85; neck.add(head); rig.head=head;
+  head.add(sph(R,['bald','barcode'].includes(H.hair)?mat(H.skin,{roughness:0.35}):mSkin,48,32));
+  for(const s of [-1,1]){ const e=sph(R*0.17,mSkin,12,8); e.scale.set(0.6,1,0.8); e.position.set(s*R*0.97,-R*0.08,0); head.add(e); }
+  const faceMat=new THREE.MeshStandardMaterial({transparent:true,roughness:0.6,polygonOffset:true,polygonOffsetFactor:-2,depthWrite:false});
+  const face=new THREE.Mesh(new THREE.SphereGeometry(R*1.003,48,32,Math.PI/2-0.95,1.9,Math.PI*0.35,Math.PI*0.5),faceMat);
+  face.renderOrder=1; head.add(face); rig.face={mat:faceMat}; faceMat.map=getFace(rig,'normal').open;
+  // 髪
+  const hooded=H.hat.startsWith('hood');
+  const hair=new THREE.Group(); head.add(hair);
+  const bangs=()=>{ for(let k=-2;k<=2;k++){ const ph=Math.PI/2+k*0.3, th=Math.PI*(0.3+Math.abs(k)*0.025);
+      const b=sph(R*0.3,mHair,14,10); b.scale.set(0.95,1.3,0.55); const p=sp(R*0.97,ph,th); b.position.copy(p); b.lookAt(p.clone().multiplyScalar(2)); hair.add(b); } };
+  const dome=()=>{ hair.add(partSphere(R*1.07,mHairD,0,Math.PI*2,0,Math.PI*0.43)); };
+  const back=(th=0.68)=>{ hair.add(partSphere(R*1.06,mHairD,Math.PI,Math.PI,0,Math.PI*th)); };
+  const curls=(N,rr,yMin)=>{ for(let i=0;i<N;i++){ const y=1-(i/(N-1))*(1-yMin), r=Math.sqrt(Math.max(0,1-y*y)), a=i*2.399;
+      const p=new THREE.Vector3(Math.cos(a)*r,y,Math.sin(a)*r); if(p.z>0.35&&p.y<0.55) continue; if(p.y<-0.1&&p.z>-0.2) continue;
+      const b=sph(R*rr,mHair,12,8); b.position.copy(p.multiplyScalar(R*1.02)); hair.add(b); } };
+  if(H.hair!=='none'){
+    if(hooded){ bangs(); }
+    else switch(H.hair){
+      case 'short': dome(); back(0.66); bangs(); break;
+      case 'bob': dome(); hair.add(partSphere(R*1.1,mHairD,Math.PI/2+0.85,Math.PI*2-1.7,0,Math.PI*0.78)); bangs(); break;
+      case 'long': { dome(); hair.add(partSphere(R*1.1,mHairD,Math.PI/2+0.85,Math.PI*2-1.7,0,Math.PI*0.8)); bangs();
+        const lp=capsule(R*0.85,R*2.0,mHair); lp.scale.z=0.45; lp.position.set(0,-R*0.85,-R*0.55); hair.add(lp); break; }
+      case 'ponytail': { dome(); back(0.66); bangs(); const t2=sph(R*0.14,mAcc,12,8); t2.position.set(0,R*0.35,-R*1.03); hair.add(t2);
+        const pt=capsule(R*0.26,R*1.4,mHair); pt.position.set(0,-R*0.25,-R*1.25); pt.rotation.x=0.35; hair.add(pt); break; }
+      case 'twintail': { dome(); back(0.66); bangs(); for(const s of [-1,1]){ const t2=sph(R*0.13,mAcc,12,8); t2.position.set(s*R*0.92,R*0.35,-R*0.3); hair.add(t2);
+        const tt=capsule(R*0.24,R*1.3,mHair); tt.position.set(s*R*1.18,-R*0.25,-R*0.35); tt.rotation.z=s*0.25; hair.add(tt);} break; }
+      case 'bun': { dome(); back(0.66); bangs(); const bn=sph(R*0.4,mHair); bn.position.set(0,R*0.98,-R*0.35); hair.add(bn); break; }
+      case 'spiky': { dome(); back(0.62); bangs(); for(let i=0;i<11;i++){ const ph=i/11*Math.PI*2, th=Math.PI*(0.18+0.12*(i%2));
+          if(Math.abs(((ph-Math.PI/2+Math.PI*3)%(Math.PI*2))-Math.PI)<0.5) continue;
+          const c=cone(R*0.24,R*0.65,mHair,8); const p=sp(R*0.95,ph,th); c.position.copy(p);
+          c.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),p.clone().normalize()); hair.add(c); }
+        const tc=cone(R*0.26,R*0.7,mHair,8); tc.position.set(0,R*1.05,0); hair.add(tc); break; }
+      case 'curly': dome(); back(0.62); curls(34,0.3,-0.15); bangs(); break;
+      case 'perm': dome(); back(0.7); curls(60,0.24,-0.25); break;
+      case 'afro': { const a=sph(R*1.55,mHair,28,18); a.position.set(0,R*0.45,-R*0.25); hair.add(a); bangs(); break; }
+      case 'slick': { dome(); back(0.7); for(let k=-1;k<=1;k++){ const ln=new THREE.Mesh(new THREE.TorusGeometry(R*1.075,R*0.025,6,30,Math.PI*0.6),mat(shade(H.hairC,0.25))); ln.rotation.y=Math.PI/2+k*0.25; ln.rotation.z=Math.PI*0.2; hair.add(ln);} break; }
+      case 'barcode': { const ring=partSphere(R*1.05,mHairD,Math.PI*0.75,Math.PI*1.5,Math.PI*0.36,Math.PI*0.3); hair.add(ring);
+        for(let k=-1;k<=1;k++){ const st=new THREE.Mesh(new THREE.TorusGeometry(R*1.03,R*0.022,5,30,Math.PI*0.95),mHair); st.rotation.set(0,0,Math.PI*0.02); st.position.z=k*R*0.22; st.scale.z=1; hair.add(st);} break; }
+      case 'bald': { for(const s of [-1,1]){ const t2=sph(R*0.3,mHair,12,8); t2.scale.set(0.5,0.7,1.1); t2.position.set(s*R*0.92,R*0.02,-R*0.25); hair.add(t2);} break; }
+      case 'mohawk': for(let i=0;i<6;i++){ const th=Math.PI*(-0.3+i*0.14); const p=new THREE.Vector3(0,Math.cos(th),Math.sin(th)).multiplyScalar(R*0.95);
+          const c=cone(R*0.17,R*0.7,mHair,8); c.position.copy(p); c.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),p.clone().normalize()); hair.add(c); } break;
+    }
+  }
+  // 帽子
+  const hat=new THREE.Group(); head.add(hat);
+  switch(H.hat){
+    case 'cap': { hat.add(partSphere(R*1.11,mHatD,0,Math.PI*2,0,Math.PI*0.47));
+      const br=cyl(R*0.62,R*0.62,R*0.05,mHat,32); br.position.set(0,R*0.13,R*0.88); br.rotation.x=-0.12; hat.add(br);
+      const bt=sph(R*0.08,mHat,10,8); bt.position.y=R*1.1; hat.add(bt); break; }
+    case 'beanie': { hat.add(partSphere(R*1.12,mHatD,0,Math.PI*2,0,Math.PI*0.5));
+      const band=new THREE.Mesh(new THREE.TorusGeometry(R*1.1,R*0.11,10,40),mat(shade(H.hatC,-0.1))); band.rotation.x=Math.PI/2; band.position.y=R*0.08; hat.add(band);
+      const pp=sph(R*0.25,mWhite); pp.position.y=R*1.18; hat.add(pp); break; }
+    case 'beret': { const b=sph(R*0.95,mHat,32,16); b.scale.set(1.18,0.34,1.18); b.position.set(R*0.12,R*0.88,-R*0.05); b.rotation.z=-0.22; hat.add(b);
+      const st=cyl(R*0.04,R*0.04,R*0.15,mHat,6); st.position.set(R*0.06,R*1.2,-R*0.05); hat.add(st); break; }
+    case 'hood_cat': case 'hood_bear': case 'hood_rabbit': {
+      hat.add(partSphere(R*1.2,mHatD,Math.PI/2+1.0,Math.PI*2-2.0,0,Math.PI*0.86));
+      hat.add(partSphere(R*1.2,mHatD,Math.PI/2-1.0,2.0,0,Math.PI*0.33));
+      const nb=sph(R*0.9,mHat,20,12); nb.scale.set(1.1,0.5,0.8); nb.position.set(0,-R*1.05,-R*0.45); hat.add(nb);
+      for(const s of [-1,1]){
+        if(H.hat==='hood_cat'){ const e=cone(R*0.34,R*0.7,mHat,16); e.position.set(s*R*0.62,R*1.05,-R*0.05); e.rotation.z=-s*0.38; hat.add(e);
+          const ie=cone(R*0.2,R*0.45,mWhite,16); ie.position.set(s*R*0.6,R*1.0,R*0.16); ie.rotation.z=-s*0.38; hat.add(ie); }
+        if(H.hat==='hood_bear'){ const e=sph(R*0.27,mHat); e.scale.z=0.6; e.position.set(s*R*0.78,R*0.92,0); hat.add(e); const ie=sph(R*0.15,mWhite); ie.scale.z=0.5; ie.position.set(s*R*0.78,R*0.92,R*0.1); hat.add(ie); }
+        if(H.hat==='hood_rabbit'){ const e=capsule(R*0.16,R*1.0,mHat); e.scale.z=0.6; e.position.set(s*R*0.38,R*1.55,-R*0.1); e.rotation.z=-s*0.15; hat.add(e); const ie=capsule(R*0.08,R*0.75,mat('#f6b6c8')); ie.scale.z=0.5; ie.position.set(s*R*0.38,R*1.55,-R*0.02); ie.rotation.z=-s*0.15; hat.add(ie); }
+      }
+      break; }
+    case 'catband': { const band=new THREE.Mesh(new THREE.TorusGeometry(R*1.05,R*0.04,8,32,Math.PI),mHat); band.rotation.y=Math.PI/2; band.position.z=R*0.1; hat.add(band);
+      for(const s of [-1,1]){ const e=cone(R*0.26,R*0.5,mHat,16); e.position.set(s*R*0.6,R*1.0,R*0.1); e.rotation.z=-s*0.4; hat.add(e);} break; }
+    case 'ribbon': { const g=new THREE.Group(); g.position.set(R*0.55,R*0.8,R*0.2); g.rotation.z=-0.5;
+      for(const s of [-1,1]){ const l=cone(R*0.2,R*0.4,mHat,12); l.rotation.z=s*Math.PI/2; l.position.x=s*R*0.18; g.add(l);} g.add(sph(R*0.09,mHat)); hat.add(g); break; }
+    case 'hachimaki': { const b=new THREE.Mesh(new THREE.TorusGeometry(R*1.04,R*0.09,8,36),mHat); b.rotation.x=Math.PI/2-0.15; b.position.y=R*0.42; hat.add(b);
+      for(const s of [-1,1]){ const t2=cube(R*0.12,R*0.45,R*0.04,H.hatC); t2.position.set(s*R*0.12,R*0.2,-R*1.08); t2.rotation.z=s*0.5; hat.add(t2);} break; }
+    case 'crown': case 'tiara': { const big=H.hat==='crown'; const c=cyl(R*(big?0.62:0.5),R*(big?0.6:0.5),R*(big?0.35:0.12),mGold,20,true); c.material=mat('#e2b33c',{metalness:0.65,roughness:0.3,side:THREE.DoubleSide}); c.position.y=R*(big?1.05:0.95); hat.add(c);
+      for(let i=0;i<(big?6:3);i++){ const a=big?i/6*Math.PI*2:Math.PI/2+(i-1)*0.5; const p=cone(R*0.09,R*(big?0.3:0.22),mGold,6); p.position.set(Math.cos(a)*R*(big?0.6:0.5),R*(big?1.36:1.1),Math.sin(a)*R*(big?0.6:0.5)); hat.add(p);
+        const j=sph(R*0.06,mat(['#e0303a','#3a7ae0','#3ac06a'][i%3],{emissive:'#300',emissiveIntensity:0.3}),8,6); j.position.set(Math.cos(a)*R*(big?0.63:0.52),R*(big?1.05:0.95),Math.sin(a)*R*(big?0.63:0.52)); hat.add(j);} break; }
+  }
+  // 腕
+  for(const s of [-1,1]){
+    const sh=new THREE.Group(); sh.position.set(s*(tw*0.92+armR*0.4),torsoLen-armR*1.2,0); torso.add(sh); track(rig,sh,0,0,s*0.15);
+    const longSleeve=['hoodie','jacket','sweater','suit','shirt','vest'].includes(H.top), shortSleeve=['tshirt','dress','apron'].includes(H.top);
+    const sleeveM=H.top==='vest'?mat('#ffffff'):mTop;
+    sh.add(at(capsule(armR,upper+armR*2,longSleeve?sleeveM:mSkin),0,-upper/2,0));
+    if(shortSleeve){ const sl=capsule(armR*1.22,upper*0.6+armR*2,mTop); sl.position.y=-upper*0.25; sh.add(sl); }
+    const el=new THREE.Group(); el.position.y=-upper; sh.add(el); track(rig,el);
+    el.add(at(capsule(armR*0.95,fore+armR*1.9,longSleeve?sleeveM:mSkin),0,-fore/2,0));
+    if(longSleeve){ const cf=cyl(armR*1.08,armR*1.08,fore*0.2,H.top==='hoodie'?mAcc:mat(shade(H.top==='vest'?'#ffffff':H.topC,-0.12)),14); cf.position.y=-fore*0.88; el.add(cf); }
+    const hand=sph(handR,mSkin,16,12); hand.position.y=-fore-handR*0.55; el.add(hand);
+    const prop=new THREE.Group(); prop.position.y=-fore-handR*0.55; el.add(prop);
+    if(s<0){ rig.shR=sh; rig.elR=el;
+      const ph=new THREE.Group(); const pb=cube(R*0.2,R*0.36,R*0.05,'#2f3440'); ph.add(pb); const scn=cube(R*0.17,R*0.3,R*0.01,'#8fd4ff'); scn.position.z=R*0.03; ph.add(scn);
+      ph.position.set(-handR*0.4,-handR*0.2,handR*0.6); ph.rotation.set(0.2,-0.9,0); prop.add(ph); rig.phone=ph; ph.visible=false;
+    } else { rig.shL=sh; rig.elL=el;
+      if(H.prop&&H.prop!=='none'){ const pp=makeProp(H.prop,handR,R,H); prop.add(pp); rig.propObj=pp; }
+    }
+  }
+  // 脚
+  for(const s of [-1,1]){
+    const hp=new THREE.Group(); hp.position.set(s*tw*0.5,0,0); hips.add(hp); track(rig,hp);
+    const pants=['pants','cargo'].includes(H.bottom)&&!dress, shorts=H.bottom==='shorts'&&!dress;
+    const rM=H.bottom==='cargo'&&!dress?1.32:1.1;
+    hp.add(at(capsule(legR*(pants||shorts?rM:1),thigh+legR*2,(pants||shorts)?mBot:mSkin),0,-thigh/2,0));
+    if(H.bottom==='cargo'&&!dress){ const pk=cube(legR*0.5,thigh*0.4,legR*0.9,shade(H.botC,-0.15)); pk.position.set(s*legR*1.3,-thigh*0.6,0); hp.add(pk); }
+    const kn=new THREE.Group(); kn.position.y=-thigh; hp.add(kn); track(rig,kn);
+    kn.add(at(capsule(legR*(pants?rM*0.95:0.95),shin+legR*1.9,pants?mBot:mSkin),0,-shin/2,0));
+    if(!pants&&H.shoes!=='sandal'){ const sk=cyl(legR*1.0,legR*1.0,shin*0.3,mSock,14); sk.position.y=-shin*0.82; kn.add(sk); }
+    const ank=new THREE.Group(); ank.position.y=-shin; kn.add(ank);
+    if(H.shoes==='sandal'){ const ft=sph(legR*0.95,mSkin,14,10); ft.scale.set(1.1,0.6,1.8); ft.position.set(0,-footH*0.45,legR*0.5); ank.add(ft);
+      const so=sph(legR*1.2,mShoe,16,10); so.scale.set(1.05,0.22,1.85); so.position.set(0,-footH*0.78,legR*0.5); ank.add(so); }
+    else { const shoeM=H.shoes==='loafer'?mat(H.shoeC,{roughness:0.25}):mShoe;
+      const sh=sph(legR*1.25,shoeM,20,12); sh.scale.set(1.05,0.75*footH/(legR*1.25)/1.05,1.75); sh.position.set(0,-footH*0.32,legR*0.55); ank.add(sh);
+      const so=sph(legR*1.3,H.shoes==='boots'||H.shoes==='loafer'?mat(shade(H.shoeC,-0.3)):mWhite,20,10); so.scale.set(1.04,0.28*footH/(legR*1.3),1.8); so.position.set(0,-footH*0.74,legR*0.55); ank.add(so);
+      if(H.shoes==='boots'){ const bt=cyl(legR*1.12,legR*1.12,shin*0.5,mShoe,16); bt.position.y=-shin*0.72; kn.add(bt); }
+      else if(H.shoes==='sneaker'){ const lace=cube(legR*0.7,legR*0.08,legR*0.6,'#ffffff'); lace.position.set(0,-footH*0.05,legR*1.05); lace.rotation.x=-0.5; ank.add(lace); } }
+    if(s<0){ rig.hipR=hp; rig.kneeR=kn; } else { rig.hipL=hp; rig.kneeL=kn; }
+  }
+  // 小物
+  const A=H.acc;
+  if(A.includes('headset')){ const hm=mat('#2f3440'); const band=new THREE.Mesh(new THREE.TorusGeometry(R*1.12,R*0.05,8,30,Math.PI),hm); head.add(band);
+    for(const s of [-1,1]){ const cp=cyl(R*0.24,R*0.24,R*0.14,hm,18); cp.rotation.z=Math.PI/2; cp.position.set(s*R*1.08,-R*0.02,0); head.add(cp);
+      const pd=cyl(R*0.17,R*0.17,R*0.05,mat('#7ad0c0'),18); pd.rotation.z=Math.PI/2; pd.position.set(s*R*1.16,-R*0.02,0); head.add(pd); }
+    const a=new THREE.Vector3(-R*1.1,-R*0.1,R*0.1), b=new THREE.Vector3(-R*0.42,-R*0.62,R*0.92);
+    head.add(rodBetween(a,b,R*0.025,hm)); const mic=sph(R*0.09,mat('#222'),10,8); mic.position.copy(b); head.add(mic); }
+  if(A.includes('headphones')){ const ring=new THREE.Mesh(new THREE.TorusGeometry(tw*0.62,tw*0.07,8,28),mWhite); ring.rotation.x=Math.PI/2*0.8; ring.position.set(0,torsoLen*0.98,0); torso.add(ring);
+    for(const s of [-1,1]){ const cp=cyl(tw*0.28,tw*0.28,tw*0.18,mWhite,18); cp.rotation.z=Math.PI/2; cp.rotation.y=s*0.6; cp.position.set(s*tw*0.55,torsoLen*0.96,tw*0.32); torso.add(cp);
+      const pad=cyl(tw*0.2,tw*0.2,tw*0.05,mAcc,18); pad.rotation.copy(cp.rotation); pad.position.copy(cp.position); pad.position.x+=s*tw*0.08; torso.add(pad);} }
+  if(A.includes('glasses')||A.includes('sunglasses')){ const sun=A.includes('sunglasses'); const gm=mat(sun?'#111':'#2b2522');
+    for(const s of [-1,1]){
+      if(sun){ const l=sph(R*0.22,mat('#151515',{roughness:0.15,metalness:0.4}),16,10); l.scale.set(1.1,0.75,0.25); l.position.set(s*R*0.34,-R*0.16,R*1.0); l.rotation.y=s*0.33; head.add(l); }
+      else { const lr=new THREE.Mesh(new THREE.TorusGeometry(R*0.19,R*0.022,8,28),gm); lr.position.set(s*R*0.34,-R*0.15,R*1.02); lr.rotation.y=s*0.33; head.add(lr); }
+      const tm2=cyl(R*0.018,R*0.018,R*0.75,gm,6); tm2.rotation.x=Math.PI/2; tm2.position.set(s*R*0.6,-R*0.12,R*0.62); tm2.rotation.y=s*0.25; head.add(tm2);}
+    const br=cyl(R*0.018,R*0.018,R*0.25,gm,6); br.rotation.z=Math.PI/2; br.position.set(0,-R*0.12,R*1.08); head.add(br); }
+  if(A.includes('mustache')){ for(const s of [-1,1]){ const m=capsule(R*0.08,R*0.32,mat(H.hairC==='none'||['bald'].includes(H.hair)?'#ddd':H.hairC)); m.rotation.z=Math.PI/2+s*0.35; m.position.set(s*R*0.14,-R*0.43,R*0.93); head.add(m);} }
+  if(A.includes('beard')){ const bd=sph(R*0.45,mat(H.hairC),20,12); bd.scale.set(1.1,0.8,0.6); bd.position.set(0,-R*0.85,R*0.55); head.add(bd); }
+  if(A.includes('horns')){ for(const s of [-1,1]){ const h=cone(R*0.16,R*0.55,mat('#f2e6c8'),10); h.position.set(s*R*0.55,R*0.95,R*0.1); h.rotation.z=-s*0.45; head.add(h);} }
+  if(A.includes('antenna')){ for(const s of [-1,1]){ const a=new THREE.Vector3(s*R*0.3,R*0.9,0), b=new THREE.Vector3(s*R*0.6,R*1.6,0); head.add(rodBetween(a,b,R*0.03,mat('#444'))); const k=sph(R*0.12,mat('#ffe14a',{emissive:'#a08000',emissiveIntensity:0.5})); k.position.copy(b); head.add(k);} }
+  if(A.includes('tie')&&!['suit','shirt','vest'].includes(H.top)) tie(H.accC);
+  if(A.includes('bowtie')){ for(const s of [-1,1]){ const b=cone(tw*0.14,tw*0.26,mat(H.accC),8); b.rotation.z=s*Math.PI/2; b.position.set(s*tw*0.12,torsoLen*0.95,fz*1.05); torso.add(b);} }
+  if(A.includes('pearls')){ for(let i=0;i<16;i++){ const a=Math.PI*0.1+i/15*Math.PI*0.8; const p=sph(tw*0.06,mat('#fffaf0',{roughness:0.2}),8,6); p.position.set(Math.cos(a)*tw*0.42,torsoLen*0.93-Math.sin(a)*tw*0.25,Math.sin(a)*fz*0.95); torso.add(p);} }
+  if(A.includes('badge')){ const b=cyl(tw*0.12,tw*0.12,tw*0.03,mGold,16); b.rotation.x=Math.PI/2; b.position.set(-tw*0.42,torsoLen*0.75,fz*1.04); torso.add(b); }
+  if(A.includes('namecard')){ const c=cube(tw*0.3,tw*0.4,tw*0.02,'#ffffff'); c.position.set(-tw*0.4,torsoLen*0.62,fz*1.06); torso.add(c); const s2=cube(tw*0.24,tw*0.08,tw*0.01,H.accC); s2.position.set(0,tw*0.12,tw*0.015); c.add(s2); }
+  if(A.includes('cape')){ const c=cube(tw*2.6,torsoLen+legLen*0.85,tw*0.06,mat('#b01828',{side:THREE.DoubleSide})); c.position.set(0,torsoLen*0.95-(torsoLen+legLen*0.85)/2,-tw*0.85); c.rotation.x=0.08; torso.add(c);
+    const f=new THREE.Mesh(new THREE.TorusGeometry(tw*0.5,tw*0.14,8,20),mat('#f5f0ea')); f.rotation.x=Math.PI/2; f.position.y=torsoLen*0.98; torso.add(f); }
+  if(A.includes('scarf')){ const sc=new THREE.Mesh(new THREE.TorusGeometry(tw*0.45,tw*0.17,10,24),mAcc); sc.rotation.x=Math.PI/2; sc.position.y=torsoLen*0.98; torso.add(sc);
+    const tl=cube(tw*0.35,torsoLen*0.5,tw*0.1,H.accC); tl.position.set(tw*0.3,torsoLen*0.68,fz+tw*0.05); tl.rotation.z=0.1; torso.add(tl); }
+  if(A.includes('baby')){ const cr=cube(tw*1.0,torsoLen*0.5,tw*0.4,H.accC); cr.position.set(0,torsoLen*0.48,fz+tw*0.2); torso.add(cr);
+    const bh=sph(R*0.38,mSkin); bh.position.set(0,torsoLen*0.85,fz+tw*0.3); torso.add(bh); const bc=partSphere(R*0.4,mat('#ffd86a',{side:THREE.DoubleSide}),0,Math.PI*2,0,Math.PI*0.4); bc.position.copy(bh.position); torso.add(bc);
+    for(const s of [-1,1]){ const e=sph(R*0.04,mat('#2a1c15'),6,4); e.position.set(bh.position.x+s*R*0.12,bh.position.y,bh.position.z+R*0.35); torso.add(e);} }
+  if(A.includes('bag')){ const st=new THREE.Mesh(new THREE.TorusGeometry(tw*1.15,tw*0.05,6,32),mAcc); st.scale.set(1,1.15,0.72); st.rotation.z=0.6; st.position.set(0,torsoLen*0.5,0); torso.add(st);
+    const bg=cube(tw*0.75,tw*0.6,tw*0.3,H.accC); bg.position.set(tw*0.98,torsoLen*0.02,tw*0.28); torso.add(bg); }
+  if(A.includes('backpack')){ const bp=capsule(tw*0.55,torsoLen*0.78,mAcc); bp.scale.set(1.25,1,0.6); bp.position.set(0,torsoLen*0.52,-tw*0.95); torso.add(bp); }
+  if(A.includes('tail')){ const tg=new THREE.Group(); tg.position.set(0,-tw*0.1,-tw*0.6); hips.add(tg); track(rig,tg); rig.tailH=tg;
+    const tcM=H.hat.startsWith('hood')||H.hat==='catband'?mHat:mHair; const sz=[0.22,0.3,0.36,0.34];
+    sz.forEach((k,i)=>{ const b=sph(tw*k*1.4,i===3?mWhite:tcM,16,12); b.position.set(0,legLen*(-0.15+0.2*i),-legLen*(0.18*i+0.03*i*i)); tg.add(b); }); }
+  rig.height=T;
+  resetRig(rig); snapRig(rig);
+  return rig;
+}
+
+/* ---------- 人間のモーション ---------- */
+const HUMAN_MOTIONS=[['idle','待機'],['walk','歩く'],['wave','手を振る'],['phone','電話'],['phone_angry','電話で激怒'],['angry','地団駄'],['yell','怒鳴る'],['think','考える'],['calm','おだやか'],['laugh','大笑い'],['cry','号泣'],['dizzy','目が回る'],['blown','ふっとぶ'],['bow','おじぎ'],['cheer','バンザイ'],['dance','ダンス'],['point','指差し'],['surprise','びっくり'],['sad','落ち込む'],
+  ['sit_type','着席タイピング'],['op_talk','インカム対応'],['op_bow','着席おじぎ'],['op_stress','頭を抱える'],['op_win','ガッツポーズ']];
+const DOWN=new THREE.Vector3(0,-1,0);
+function ik(rig,side,target,pole){
+  const sh=side<0?rig.shR:rig.shL, el=side<0?rig.elR:rig.elL, D=rig.dims;
+  const S=sh.userData.rest, a=D.upper, b=D.fore+D.handR*0.55;
+  const d=target.clone().sub(S); let dist=d.length(); dist=Math.min(a+b-1e-4,Math.max(Math.abs(a-b)+1e-4,dist));
+  const dir=d.normalize();
+  const cosA=Math.min(1,Math.max(-1,(a*a+dist*dist-b*b)/(2*a*dist))), A=Math.acos(cosA);
+  const P=(pole||new THREE.Vector3(side*0.9,-0.4,-0.5)).clone();
+  const perp=P.sub(dir.clone().multiplyScalar(P.dot(dir))).normalize();
+  const e1=dir.clone().multiplyScalar(cosA).add(perp.multiplyScalar(Math.sin(A))).normalize();
+  const E=S.clone().add(e1.clone().multiplyScalar(a)), T2=S.clone().add(dir.clone().multiplyScalar(dist));
+  const e2=T2.sub(E).normalize();
+  const qU=new THREE.Quaternion().setFromUnitVectors(DOWN,e1);
+  const e2l=e2.applyQuaternion(qU.clone().invert());
+  sh.userData.tq.copy(qU); el.userData.tq.setFromUnitVectors(DOWN,e2l);
+}
+const V=(x,y,z)=>new THREE.Vector3(x,y,z);
+function setMotion(R,m,t){ if(R.motion!==m){ R.motion=m; R.mstart=t; } }
+function animateHuman(R,m,t){
+  resetRig(R);
+  const D=R.dims, s=Math.sin, c=Math.cos, lt=t-R.mstart;
+  if(R.phone) R.phone.visible=['phone','phone_angry'].includes(m);
+  const legs=(ph,amp,knee)=>{ rot(R.hipL,s(ph)*amp); rot(R.hipR,-s(ph)*amp); rot(R.kneeL,Math.max(0,s(ph+1.3))*knee); rot(R.kneeR,Math.max(0,s(ph+1.3+Math.PI))*knee); };
+  const phoneR=()=>ik(R,-1,V(-(D.R*1.0+D.handR*0.4),D.headY-D.R*0.08,D.R*0.12),V(-1,-0.8,0.2));
+  const seat=()=>{ pos(R.hips,0,-D.thigh,0); rot(R.hipL,-1.5,0,0.06); rot(R.hipR,-1.5,0,-0.06); rot(R.kneeL,1.5); rot(R.kneeR,1.5); };
+  const typeY=D.torsoLen*0.32, typeZ=D.tw*1.7;
+  const typeL=(ph)=>ik(R,1,V(D.tw*0.55,typeY+Math.max(0,s(t*15+ph))*D.R*0.07,typeZ),V(1,-0.6,-0.3));
+  const typeR=(ph)=>ik(R,-1,V(-D.tw*0.55,typeY+Math.max(0,s(t*15+ph))*D.R*0.07,typeZ),V(-1,-0.6,-0.3));
+  if(R.tailH) rot(R.tailH,s(t*2)*0.1,s(t*3)*0.4,0);
+  switch(m){
+    case 'idle': pos(R.hips,0,s(t*2)*D.T*0.004,0); rot(R.shL,0,0,s(t*2)*0.03); rot(R.shR,0,0,-s(t*2)*0.03); rot(R.neck,s(t*0.7)*0.04,s(t*0.5)*0.18,0); rot(R.torso,0,s(t*0.5)*0.04,0); break;
+    case 'walk': { const ph=t*7; legs(ph,0.55,0.8); rot(R.shL,-s(ph)*0.5); rot(R.shR,s(ph)*0.5); rot(R.elL,-0.25); rot(R.elR,-0.25);
+      pos(R.mover,0,Math.abs(s(ph))*D.T*0.015,0); rot(R.torso,0,s(ph)*0.08,0); break; }
+    case 'wave': ik(R,-1,V(-(D.tw+D.R*0.55)+s(t*8)*D.R*0.28,D.headY+D.R*0.35,D.R*0.35),V(-1,-0.6,-0.2)); rot(R.neck,0,-0.1,0.14); pos(R.hips,0,s(t*2)*D.T*0.004,0); break;
+    case 'phone': phoneR(); ik(R,1,V(D.tw*1.3,D.torsoLen*0.12,-D.tw*0.15),V(1,0,-0.6)); rot(R.neck,s(t*3)*0.05,0,0.16); rot(R.hips,0,0,s(t*0.8)*0.04); break;
+    case 'phone_angry': { phoneR(); ik(R,1,V(D.tw*1.2,D.torsoLen*0.85+s(t*18)*D.R*0.15,D.tw*1.3),V(1,-0.5,-0.4));
+      const st=Math.max(0,s(t*6))**3; rot(R.hipL,-st*0.6); rot(R.kneeL,st*1.0); pos(R.mover,s(t*40)*D.T*0.003,0,0);
+      rot(R.torso,0.14+s(t*6)*0.04); rot(R.neck,-0.15,0,0.12); break; }
+    case 'angry': { const ph=t*9, a=Math.max(0,s(ph)), b=Math.max(0,-s(ph));
+      rot(R.hipL,-a*0.7); rot(R.kneeL,a*1.1); rot(R.hipR,-b*0.7); rot(R.kneeR,b*1.1); pos(R.mover,0,Math.abs(s(ph))*D.T*0.02,0);
+      for(const sd of [-1,1]) ik(R,sd,V(sd*D.tw*0.95,D.torsoLen*0.95+s(t*22+sd)*D.R*0.12,D.tw*1.5),V(sd,-0.6,-0.4));
+      rot(R.neck,-0.1,s(t*9)*0.12,0); rot(R.torso,0.08); break; }
+    case 'yell': rot(R.torso,0.3+s(t*6)*0.05); rot(R.neck,-0.4); rot(R.shL,0.7,0,0.45); rot(R.shR,0.7,0,-0.45); rot(R.elL,-0.3); rot(R.elR,-0.3);
+      pos(R.mover,s(t*40)*D.T*0.004,0,0); rot(R.hipL,-0.25); rot(R.kneeR,0.2); break;
+    case 'think': ik(R,-1,V(-D.R*0.12,D.headY-D.R*0.92,D.R*0.6),V(-1,-1,0.2)); ik(R,1,V(-D.tw*0.15,D.torsoLen*0.42,D.tw*1.05),V(1,-0.5,0.3));
+      rot(R.neck,-0.08+s(t*0.7)*0.04,0,0.18+s(t*0.5)*0.05); break;
+    case 'calm': for(const sd of [-1,1]) ik(R,sd,V(sd*D.tw*0.22,D.torsoLen*0.32,D.tw*1.25),V(sd,-0.6,-0.3));
+      rot(R.neck,0.05,0,s(t*1.2)*0.12); rot(R.hips,0,0,s(t*1.2)*0.04); pos(R.hips,0,s(t*2.4)*D.T*0.004,0); break;
+    case 'laugh': { const k=s(t*14); ik(R,1,V(D.tw*0.3,D.torsoLen*0.25,D.tw*1.2),V(1,-0.6,-0.3)); ik(R,-1,V(-D.tw*1.1,D.torsoLen*0.9+k*D.R*0.15,D.tw*1.4),V(-1,-0.5,-0.4));
+      rot(R.torso,-0.2+k*0.06); rot(R.neck,-0.35+k*0.05); pos(R.mover,0,Math.abs(k)*D.T*0.01,0); break; }
+    case 'cry': { const k=s(t*20)*0.02; for(const sd of [-1,1]) ik(R,sd,V(sd*D.R*0.38,D.headY-D.R*0.12+k,D.R*1.05),V(sd,-1,0));
+      rot(R.torso,0.18); rot(R.neck,0.3); pos(R.hips,0,k*D.T*0.2,0); rot(R.kneeL,0.15); rot(R.kneeR,0.15); break; }
+    case 'dizzy': rot(R.neck,s(t*4)*0.25,0,c(t*4)*0.25); rot(R.torso,0,0,s(t*2)*0.15); rot(R.shL,0,0,0.6+s(t*4)*0.2); rot(R.shR,0,0,-0.6-s(t*4)*0.2);
+      rot(R.hipL,s(t*2)*0.2,0,0.1); rot(R.hipR,-s(t*2)*0.2,0,-0.1); pos(R.mover,s(t*2)*D.T*0.03,0,0); break;
+    case 'blown': { rot(R.mover,lt*11,lt*7,lt*3); for(const sd of [-1,1]) ik(R,sd,V(sd*(D.tw+D.R*0.6),D.headY+D.R*1.2,D.R*0.3),V(sd,0,-0.5));
+      rot(R.hipL,-0.6+s(t*20)*0.4); rot(R.hipR,-0.2-s(t*20)*0.4); rot(R.kneeL,0.8); rot(R.kneeR,0.5);
+      if(R.viewer){ const p=(lt%2.2)/2.2; pos(R.mover,0,s(p*Math.PI)*D.T*0.7,0); } break; }
+    case 'cheer': { const p=Math.abs(s(t*4));
+      for(const sd of [-1,1]) ik(R,sd,V(sd*(D.tw+D.R*0.3),D.headY+D.R*1.6+p*D.R*0.15,D.R*0.1),V(sd,0,-0.5));
+      pos(R.mover,0,p*D.T*0.08,0); rot(R.kneeL,(1-p)*0.5); rot(R.kneeR,(1-p)*0.5); rot(R.hipL,-(1-p)*0.25); rot(R.hipR,-(1-p)*0.25); pos(R.hips,0,-(1-p)*D.legLen*0.06,0); rot(R.neck,-0.15); break; }
+    case 'bow': { const b=Math.max(0,s(t*1.5))**0.6; rot(R.torso,0.65*b); rot(R.neck,0.25*b); rot(R.shL,-0.6*b,0,0.05); rot(R.shR,-0.6*b,0,-0.05); break; }
+    case 'dance': { const ph=t*6, a=s(ph);
+      rot(R.hips,0,0,a*0.12); rot(R.torso,0,0,-a*0.18); pos(R.mover,a*D.T*0.03,Math.abs(s(ph*2))*D.T*0.02,0);
+      ik(R,-1,a>0?V(-(D.tw+D.R*0.4),D.headY+D.R*1.2,D.R*0.2):V(-D.tw*1.3,D.torsoLen*0.2,D.tw*0.4),V(-1,0,-0.5));
+      ik(R,1,a<0?V(D.tw+D.R*0.4,D.headY+D.R*1.2,D.R*0.2):V(D.tw*1.3,D.torsoLen*0.2,D.tw*0.4),V(1,0,-0.5));
+      rot(R.hipL,a>0?-0.4:0,0,0.1); rot(R.kneeL,a>0?0.7:0); rot(R.hipR,a<0?-0.4:0,0,-0.1); rot(R.kneeR,a<0?0.7:0); rot(R.neck,0,0,a*0.2); break; }
+    case 'point': ik(R,-1,V(-D.tw*0.7,D.torsoLen*0.95+D.R*0.4,(D.upper+D.fore)*1.2+s(t*3)*0.03),V(-1,-0.5,0)); ik(R,1,V(D.tw*1.3,D.torsoLen*0.12,-D.tw*0.15),V(1,0,-0.6));
+      rot(R.neck,-0.05,-0.2,0); rot(R.torso,0,-0.15,0); break;
+    case 'surprise': { const p=(t%2.4)/2.4, j=p<0.25?s(p/0.25*Math.PI):0;
+      for(const sd of [-1,1]) ik(R,sd,V(sd*(D.tw+D.R*0.9),D.headY+D.R*0.25,D.R*0.5),V(sd,-1,-0.3));
+      rot(R.torso,-0.15); rot(R.neck,-0.2); pos(R.mover,0,j*D.T*0.07,-j*D.T*0.02); break; }
+    case 'sad': rot(R.neck,0.45,s(t*0.4)*0.1,0); rot(R.torso,0.18); rot(R.shL,-0.2,0,0.02); rot(R.shR,-0.2,0,-0.02); pos(R.hips,0,-D.legLen*0.02,0); rot(R.kneeL,0.1); rot(R.kneeR,0.1); break;
+    case 'sit_type': seat(); typeL(0); typeR(2); rot(R.torso,0.1); rot(R.neck,0.08+s(t*0.6)*0.03,s(t*0.4)*0.1,0); break;
+    case 'op_talk': seat(); typeL(0); ik(R,-1,V(-D.R*0.55,D.headY-D.R*0.55,D.R*0.85),V(-1,-0.8,0)); rot(R.torso,0.06); rot(R.neck,s(t*4)*0.06,0,0.1); break;
+    case 'op_bow': { seat(); const b=Math.max(0,s(t*3))**0.5; rot(R.torso,0.45*b+0.05); rot(R.neck,0.35*b); typeL(0); typeR(1); break; }
+    case 'op_stress': seat(); for(const sd of [-1,1]) ik(R,sd,V(sd*D.R*1.05,D.headY+D.R*0.15,D.R*0.1),V(sd,-0.4,0.4)); rot(R.torso,-0.12); rot(R.neck,0.1,s(t*9)*0.15,0); break;
+    case 'op_win': { seat(); const p=Math.abs(s(t*5)); ik(R,-1,V(-D.tw*1.1,D.headY+D.R*1.0+p*D.R*0.4,D.R*0.3),V(-1,0,-0.5)); typeL(0);
+      rot(R.torso,-0.08); rot(R.neck,-0.15); pos(R.mover,0,p*D.T*0.02,0); break; }
+  }
+  const blink=((t+0.7+(R.H.seedT||0))%3.6)<0.13;
+  const f=getFace(R,R.expr||'normal');
+  R.face.mat.map=blink?f.closed:f.open;
+}
+/* =========================================================
+   ゲームデータ
+   ========================================================= */
+const TAGS={
+  apo:{n:'謝罪',i:'🙇',c:'#6a8fd6'}, emp:{n:'共感',i:'💗',c:'#e66a9a'}, log:{n:'論理',i:'🧠',c:'#4aa0a0'}, rule:{n:'規約',i:'📜',c:'#8a7a5a'},
+  fun:{n:'ユーモア',i:'🤡',c:'#e6a23a'}, firm:{n:'毅然',i:'🛡️',c:'#5a5a7a'}, flat:{n:'おだて',i:'👏',c:'#d6b43a'}, ask:{n:'質問',i:'❓',c:'#3a8ad6'},
+  offer:{n:'提案',i:'🎁',c:'#4ab06a'}, wait:{n:'待ち',i:'⏸️',c:'#8a8aa0'}, boss:{n:'上司',i:'👔',c:'#7a4ab0'}, chat:{n:'雑談',i:'☕',c:'#b07a4a'},
+};
+const TAGKEYS=Object.keys(TAGS);
+
+/* ---------- オペレーター（プレイヤー） ---------- */
+const OPERATORS=[
+  ['新人 さくら',{hair:'bob',hairC:'#3a2a20',eyes:'round',eyeC:'#5a3a22',top:'vest',topC:'#ffffff',accC:'#2a4a7a',bottom:'skirt',botC:'#2a3a5a',shoes:'loafer',shoeC:'#3a2a20',sockC:'#2a3a5a',acc:['headset','namecard','tie'],heads:3}],
+  ['ベテラン 剛',{hair:'short',hairC:'#222',eyes:'sharp',eyeC:'#3a2618',brows:'thick',mouth:'flat',top:'shirt',topC:'#ffffff',accC:'#2a5aa0',bottom:'pants',botC:'#333844',shoes:'loafer',shoeC:'#222',acc:['headset','namecard','tie'],heads:3.4,build:1.1}],
+  ['ギャル りな',{hair:'long',hairC:'#e8c070',eyes:'sparkle',eyeC:'#c06aa0',mouth:'grin',top:'vest',topC:'#ffffff',accC:'#d05a7a',bottom:'skirt',botC:'#5a3a5a',shoes:'loafer',shoeC:'#2a1a1a',sockC:'#ffffff',acc:['headset','namecard','tie'],heads:3.2}],
+  ['ねこ好き みけ',{hair:'short',hairC:'#f4e3b5',eyes:'wink',eyeC:'#3aa8a0',mouth:'cat',hat:'catband',hatC:'#8a6a5a',top:'hoodie',topC:'#efeae6',accC:'#8a8296',bottom:'shorts',botC:'#7d7590',shoes:'sneaker',acc:['headset','tail','namecard'],heads:2.7}],
+  ['熱血 ほむら',{hair:'spiky',hairC:'#e0533f',eyes:'sharp',eyeC:'#d6a03a',mouth:'fang',top:'jacket',topC:'#25232a',accC:'#e84d5b',bottom:'cargo',botC:'#4a4650',shoes:'boots',shoeC:'#25232a',acc:['headset','namecard'],heads:3.3}],
+  ['クール れい',{hair:'ponytail',hairC:'#2a2a3a',eyes:'sleepy',eyeC:'#5a8fd6',mouth:'smile',top:'shirt',topC:'#e8eef8',accC:'#3a3a5a',bottom:'pants',botC:'#2a2a3a',shoes:'loafer',shoeC:'#222',acc:['headset','glasses','namecard','tie'],heads:3.5}],
+];
+
+/* ---------- クレーマー 30人 + ボス 7人 ----------
+ [id, 名前, 絵文字, 見た目, 弱点, 耐性, 初期怒り, 忍耐ターン, 特性, 場所, 背景色, セリフ3つ, 撃退時, 炎上時] */
+const C=(id,name,em,H,weak,res,anger,pat,trait,loc,bg,lines,win,fire,boss)=>({id,name,em,H,weak,res,anger,pat,trait,loc,bg,lines,win,fire,boss:!!boss});
+const CLAIMERS=[
+ C('rikutsu','理屈屋の理系オジサン','🤓',{hair:'barcode',hairC:'#555',acc:['glasses','tie'],top:'shirt',topC:'#dfe7ef',accC:'#3355aa',botC:'#555b66',shoes:'loafer',shoeC:'#222',prop:'tablet',heads:3.2},['log','ask'],['fun','chat'],70,6,'',
+   '研究室','#cfe0ea',['この説明書、論理的に破綻しているんだよ！','根拠を示したまえ、根拠を！','感情論はいらない。数字で話そう。'],'ふむ…筋は通っている。了解した。','非論理的だ！学会で発表してやる！'),
+ C('obaachan','寂しがりのおばあちゃん','👵',{hair:'bun',hairC:'#d9d9d9',eyes:'sleepy',wrinkle:true,top:'sweater',topC:'#b98bb8',bottom:'skirt',botC:'#6a5a7a',shoes:'sandal',shoeC:'#7a5a4a',prop:'cane',height:0.82,heads:2.8},['chat','emp'],['rule','firm'],55,8,'',
+   '縁側','#e8d9b5',['もしもし？テレビのリモコンが動かないのよぉ','孫も最近電話くれなくてねぇ…','あなた声が孫に似てるわねぇ'],'あらあら、話したらスッキリしたわ。ありがとねぇ','もう誰も話を聞いてくれないのね…（大号泣）'),
+ C('shacho','自称VIP社長','🕴️',{hair:'slick',hairC:'#222',acc:['sunglasses','mustache'],top:'suit',topC:'#2a2a35',accC:'#d4a020',botC:'#2a2a35',shoes:'loafer',shoeC:'#111',prop:'phone2',build:1.25,heads:3.3},['flat','boss'],['wait','rule'],80,6,'',
+   '社長室','#d8c7a0',['私を誰だと思っている！社長だぞ！','君じゃ話にならん。偉い人を出せ！','ワシの会社の年商を知っとるのか！'],'ガッハッハ！わかっとるじゃないか！','君の会社ごと買収してやる！'),
+ C('influencer','SNSインフルエンサー','📱',{hair:'twintail',hairC:'#ff8ac6',eyes:'sparkle',eyeC:'#c03a8a',hat:'ribbon',hatC:'#ff4fa0',top:'tshirt',topC:'#ffffff',bottom:'skirt',botC:'#ff6fae',shoes:'boots',shoeC:'#ffffff',prop:'phone2',accC:'#ff4fa0'},['flat','offer'],['firm','rule'],75,6,'viral',
+   '映えカフェ','#ffd6ea',['フォロワー50万人に拡散しちゃおっかな〜？','この対応、全然映えないんだけど！','ライブ配信中なんだけど、どうする？'],'神対応すぎ！ストーリーに載せとくね💕','はい炎上確定〜！#最悪のサポート'),
+ C('sharei','永遠に謝罪を求める人','🙇',{hair:'short',hairC:'#333',brows:'angry',top:'jacket',topC:'#7a6a5a',accC:'#c8b89a',botC:'#4a4038',shoes:'loafer',shoeC:'#3a2a20'},['apo'],['log','fun'],88,7,'apoNeed',
+   '自宅','#e5dccd',['まず謝れ！話はそれからだ！','誠意が足りない！もっと謝れ！','謝罪の言葉が軽いんだよ！'],'…まぁ、そこまで言うなら許してやる','謝って済むと思うなよ！！'),
+ C('kiyaku','規約マニア','📜',{hair:'bob',hairC:'#2b2b2b',acc:['glasses'],top:'shirt',topC:'#f2f2f2',accC:'#555',bottom:'pants',botC:'#3a3a3a',prop:'book',propC:'#2a3a6a'},['rule','log'],['emp','chat'],65,6,'',
+   '図書館','#d7cfb8',['第14条第3項に違反していますよね？','約款の該当箇所を読み上げてください','附則まで全部読みましたけど？'],'規約上、問題なしと認めます。','規約違反だ！消費者センターに通報する！'),
+ C('kansai','お笑い好きの関西人','🤣',{hair:'perm',hairC:'#3a2a20',top:'tshirt',topC:'#ffcc00',bottom:'pants',botC:'#222',shoes:'sandal',prop:'harisen',mouth:'grin'},['fun','chat'],['rule','wait'],70,6,'',
+   'たこ焼き屋','#ffd08a',['なんでやねん！説明がおもんないわ！','オチはどこやねん、オチは！','保留音で笑わせてみいや！'],'ええやん！自分おもろいなぁ！','おもんない！ほんまおもんない！'),
+ C('sekkachi','せっかちサラリーマン','⏱️',{hair:'short',hairC:'#2a2a2a',top:'suit',topC:'#3a4660',accC:'#d03a3a',botC:'#3a4660',shoes:'loafer',shoeC:'#222',prop:'tablet',brows:'angry'},['offer','firm'],['wait','chat'],70,4,'',
+   '駅のホーム','#c9d3dc',['3分で解決して！電車来るから！','結論から言って！結論！','保留にしたら即切るからね！'],'早いね！それでいい！じゃ！','遅い！時間の無駄だった！'),
+ C('point','ポイント乞食','🪙',{hair:'spiky',hairC:'#7a5a3a',top:'hoodie',topC:'#9aa8a8',accC:'#5a6a6a',bottom:'shorts',botC:'#556',prop:'coin'},['offer'],['apo','emp'],65,6,'',
+   'スーパー','#e2f0d0',['で、何ポイントくれるの？','謝罪はいいからクーポンちょうだい','誠意は金額で示してよ'],'ポイントゲット！やったー！','ケチ！もう二度と買わない！'),
+ C('shokunin','頑固な職人','🔨',{hair:'bald',hairC:'#444',hat:'hachimaki',hatC:'#ffffff',acc:['beard'],top:'apron',topC:'#2d3a55',accC:'#6a4a2a',botC:'#2d3a55',shoes:'sandal',prop:'hammer',brows:'thick',build:1.15},['apo','log'],['fun','flat'],78,6,'',
+   '工房','#d4b99a',['この道具、仕事にならねぇんだよ！','いい加減な仕事しやがって！','職人をナメてんのか！'],'…わかりゃいいんだ。てぇしたもんだ','こんな会社とは縁切りだ！'),
+ C('okusama','猫好きの奥様','🐱',{hair:'long',hairC:'#6a4030',top:'dress',topC:'#c9a0d8',acc:['pearls'],shoes:'loafer',shoeC:'#ffffff',prop:'cat',propC:'#f2a65a'},['chat','emp'],['firm','rule'],60,7,'',
+   '豪邸','#f0e2f0',['うちのミーちゃんがこの商品を嫌がるのよ！','ミーちゃんの気持ちを考えたことある？','猫の写真100枚見せましょうか？'],'ミーちゃんも喜んでるわ。にゃーん','ミーちゃんが泣いてるわ！最低！'),
+ C('doogyo','元・同業者','☎️',{hair:'ponytail',hairC:'#2a2a2a',top:'shirt',topC:'#ffffff',accC:'#666',acc:['headset','tie'],bottom:'skirt',botC:'#333',shoes:'loafer',shoeC:'#222',eyes:'sharp'},['rule','boss'],['wait','flat'],72,6,'pro',
+   '他社コールセンター','#d6e2f0',['その対応、マニュアル何ページ目？','保留で時間稼ぐ手口、知ってますから','私も昔オペレーターだったのよね'],'…なかなかやるわね。合格よ','新人研修からやり直しなさい！'),
+ C('gamer','ガチ勢ゲーマー','🎮',{hair:'spiky',hairC:'#4a90e2',acc:['headphones'],top:'hoodie',topC:'#333333',accC:'#7cf',bottom:'shorts',botC:'#222',prop:'controller'},['log','fun'],['apo','rule'],70,6,'',
+   'ゲーム部屋','#3a3560',['ラグで負けたんだけど！？','運営は仕様を理解してる？','これ、バグですよね？再現手順も送ります'],'GG！神運営ってことで','クソゲー確定！レビュー★1な！'),
+ C('shijin','詩人','✒️',{hair:'long',hairC:'#3a2a2a',hat:'beret',hatC:'#7a2a3a',acc:['scarf'],accC:'#c8a050',top:'sweater',topC:'#3a3a3a',botC:'#2a2a2a',prop:'pen',eyes:'sleepy'},['emp','fun'],['log','rule'],60,7,'',
+   'カフェ','#e6d6c2',['ああ…この商品は私の心を傷つけた…','言葉に温もりがない…','季節のように移ろう怒りを聞きたまえ'],'君の言葉は…詩だ。','絶望の詩を書いて世に出してやる！'),
+ C('kenko','健康オタク','🥦',{hair:'short',hairC:'#222',top:'tank',topC:'#7ad06a',bottom:'shorts',botC:'#335',prop:'broccoli',build:1.1},['ask','log'],['chat','offer'],66,6,'',
+   'ジム','#e0f0e8',['この商品の成分、全部教えてください','添加物が入ってないって本当？','根拠となる論文はありますか？'],'納得です！今日もプロテインがうまい！','不健康な会社だ！'),
+ C('alien','宇宙人を名乗る人','👽',{skin:'#b8f0b0',hair:'none',acc:['antenna'],eyes:'dot',top:'jacket',topC:'#c0c8d8',accC:'#8890a0',botC:'#a0a8b8',shoes:'boots',shoeC:'#c0c8d8',prop:'crystal'},['fun','ask'],['rule','log'],68,6,'',
+   'UFO','#1e2440',['ワレワレハ、オコッテイル','チキュウノ規約ハ、ワカラナイ','オマエノ星ノ、ジョークヲ聞カセロ'],'ワレワレハ、マンゾクシタ。ピピピ','チキュウ、シンリャク、ケッテイ'),
+ C('yopparai','酔っ払い','🍺',{hair:'barcode',hairC:'#444',hat:'hachimaki',hatC:'#d03a3a',top:'suit',topC:'#555',accC:'#d03a3a',botC:'#555',shoes:'loafer',shoeC:'#222',prop:'beer',blush:true,eyes:'sleepy'},['wait','chat'],['log','rule'],70,6,'drunk',
+   '居酒屋','#e8b878',['ういっく…おまえんとこの商品がよぉ…','聞いてんのかぁ？ひっく','もう一杯…じゃなくて、責任者だせぇ'],'…zzz（寝落ちした）','うおおお！もう一軒行くぞぉ！'),
+ C('seigi','正義マン','🦸',{hair:'short',hairC:'#222',acc:['glasses','scarf'],accC:'#d03a3a',top:'jacket',topC:'#c33',botC:'#333',shoes:'boots',shoeC:'#333',prop:'megaphone'},['apo','rule'],['fun','chat'],76,6,'',
+   '街頭','#d0d8e8',['これは社会正義の問題です！','御社の倫理観を問いたい！','私は全消費者を代表している！'],'正義は守られた！ありがとう！','この悪を世に知らしめる！'),
+ C('machigai','間違い電話の人','🍜',{hair:'curly',hairC:'#5a3a2a',top:'tshirt',topC:'#ffffff',bottom:'shorts',botC:'#4a5a8a',shoes:'sandal',prop:'ramen'},['ask','chat'],['rule','firm'],60,6,'wrong',
+   '自宅','#f0e6d0',['出前まだですか！？もう1時間！','チャーシュー麺大盛りって言いましたよね！','え、ここラーメン屋じゃないの？'],'あっ間違い電話でした！すみません！','もういい！自分で作る！'),
+ C('jichikai','自治会長','🏘️',{hair:'slick',hairC:'#bbbbbb',acc:['glasses'],top:'jacket',topC:'#6a7a5a',accC:'#e8e0c8',botC:'#4a4a3a',shoes:'loafer',shoeC:'#3a2a20',prop:'flag',propC:'#3a7ae0',wrinkle:true},['flat','rule'],['chat','fun'],66,6,'',
+   '公民館','#e0d8c0',['町内会を代表して申し上げます','回覧板で全戸に知らせますよ','前例がありませんな'],'町内会として了承しましょう','次の総会で議題にします！'),
+ C('joren','毎日かけてくる常連','🔁',{hair:'perm',hairC:'#999999',top:'sweater',topC:'#e8a070',bottom:'skirt',botC:'#7a5a4a',shoes:'sandal',prop:'cup',wrinkle:true},['chat','emp'],['apo','firm'],45,7,'regular',
+   'こたつ','#f0dcc0',['また私よ。今日もね、ちょっと聞いて','昨日の続きなんだけど…','あら、今日はあなたなの？'],'じゃあまた明日ね〜','明日もかけるからね！！'),
+ C('papa','子連れパパ','👶',{hair:'short',hairC:'#3a2a1a',acc:['baby'],accC:'#6a8aaa',top:'tshirt',topC:'#88aadd',bottom:'cargo',botC:'#556',prop:'none'},['offer','emp'],['wait','chat'],68,5,'',
+   '公園','#cfe8c0',['ベビーカーの車輪が取れたんです！','（赤ちゃんの泣き声）急いでください！','子育てしてると時間がないんです！'],'助かりました！お昼寝の時間に間に合う！','もう泣きたいのはこっちだ！'),
+ C('uranai','占い師','🔮',{hair:'long',hairC:'#2a1a3a',acc:['scarf'],accC:'#9a5ad0',top:'dress',topC:'#4a2a6a',shoes:'sandal',prop:'crystal',eyes:'sleepy'},['flat','fun'],['log','ask'],64,6,'',
+   '占いの館','#3a2a50',['水晶にあなたの会社の未来が見えます…暗い','今日の運勢、最悪と出てるわ','星が怒れと言っているの'],'あなたの運気、上がったわよ','呪いの星回りを送っておきますね'),
+ C('robot','ロボット声の人','🤖',{skin:'#c8ccd4',hair:'none',acc:['antenna'],eyes:'dot',top:'jacket',topC:'#8890a0',accC:'#c0c4cc',botC:'#6a7080',shoes:'boots',shoeC:'#555'},['log','rule'],['emp','chat'],70,6,'',
+   '工場','#c0c4cc',['エラー。ショウヒンガ、フリョウデス','カンジョウハ、ヒツヨウアリマセン','ルールヲ、ソウシンシテクダサイ'],'ショリ、カンリョウ。サヨウナラ','システム、ボウソウ、ボウソウ'),
+ C('enka','演歌歌手','🎤',{hair:'slick',hairC:'#111',top:'suit',topC:'#d4a020',accC:'#a01818',botC:'#d4a020',shoes:'loafer',shoeC:'#fff',prop:'mic',acc:['bowtie']},['flat','emp'],['log','firm'],70,6,'',
+   'ステージ','#5a1a2a',['♪この怒り〜 届けたい〜♪','こぶしの効いたクレームを聞け！','ファンが黙っちゃいないよ！'],'♪ありがとう〜 オペレーター〜♪','♪恨みます〜 この会社〜♪'),
+ C('kinniku','筋肉自慢','💪',{hair:'mohawk',hairC:'#222',top:'tank',topC:'#ff6a3a',bottom:'shorts',botC:'#222',build:1.5,prop:'dumbbell',mouth:'grin'},['flat','firm'],['log','ask'],72,6,'',
+   'ジム','#f0e0d0',['この商品、俺の筋肉に耐えられなかった！','フンッ！フンッ！（筋トレしながら）','筋肉は嘘をつかない！'],'いい筋肉（返答）だ！ナイスバルク！','筋肉が泣いてるぞ！'),
+ C('maigo','迷子のおじいちゃん','👴',{hair:'bald',hairC:'#eeeeee',acc:['mustache','glasses'],top:'sweater',topC:'#7a8a6a',botC:'#5a5a4a',shoes:'loafer',shoeC:'#3a2a20',prop:'cane',height:0.85,wrinkle:true},['ask','emp'],['firm','log'],60,7,'',
+   '交差点','#d8dce0',['ここはどこじゃ？','わしは何の電話をかけたんじゃったかのう','昔はもっと親切じゃった'],'おお、思い出した！ありがとうな','もうええわい！'),
+ C('bengoshi','弁護士を名乗る人','⚖️',{hair:'slick',hairC:'#333',acc:['glasses','badge'],top:'suit',topC:'#222',accC:'#555',botC:'#222',shoes:'loafer',shoeC:'#111',prop:'book',propC:'#5a1a1a'},['rule','firm'],['apo','flat'],78,6,'',
+   '事務所','#d8d0c0',['これは訴訟案件ですね','その発言、記録させていただきます','謝罪は過失を認めたことになりますよ？'],'…法的には問題ありませんね','法廷で会いましょう！'),
+ C('gekikara','激辛マニア','🌶️',{skin:'#ffc8b0',hair:'spiky',hairC:'#e03020',hat:'hachimaki',hatC:'#ffffff',top:'tshirt',topC:'#e03020',botC:'#222',prop:'chili',mouth:'fang'},['fun','offer'],['apo','wait'],74,6,'',
+   '激辛ラーメン店','#ffb090',['「激辛」って書いてあるのに全然辛くない！','辛さが足りないんだよ！','俺の舌は鍛えられてるんだ！'],'ヒーッ！ちょうどいい辛さの対応だ！','怒りで顔まで真っ赤だ！'),
+ C('renai','恋愛相談を始める人','💘',{hair:'ponytail',hairC:'#c87a4a',top:'sweater',topC:'#ffb6c8',bottom:'skirt',botC:'#fff',prop:'heart',eyes:'sparkle'},['chat','emp'],['rule','log'],58,7,'',
+   '公園のベンチ','#ffe0ea',['実はクレームじゃなくて…恋の相談なの','彼が既読無視するのよ！','あなたならどうする？'],'なんだか元気出た！告白してくる！','もう恋なんてしない！'),
+ /* ---------- ボス ---------- */
+ C('onigawara','鬼瓦 権三','👹',{hair:'spiky',hairC:'#222',acc:['horns'],top:'jacket',topC:'#5a3a2a',accC:'#c8a070',botC:'#3a2a20',build:1.4,brows:'thick',mouth:'fang',shoes:'boots',shoeC:'#222',prop:'megaphone',heads:3.4},[['apo','log'],['firm'],['log','offer']],['fun'],90,8,'rotate',
+   '鬼瓦邸','#a05040',['ワシを怒らせたら怖いぞォォ！','この町でワシを知らん者はおらん！','今日こそ白黒つけてやる！'],'……ふん。見事だ、オペレーター。','ワシの怒りは天井知らずじゃぁ！',true),
+ C('joutei','SNS女帝 ミラクル☆姫','👸',{hair:'twintail',hairC:'#c89aff',eyes:'sparkle',eyeC:'#a03ad0',hat:'tiara',top:'dress',topC:'#ffd0f0',shoes:'boots',shoeC:'#fff',prop:'phone2',acc:['pearls']},[['flat'],['offer','fun'],['flat','emp']],['firm','rule'],88,8,'rotate viral',
+   '配信スタジオ','#ff9ad8',['姫に逆らうの？1000万人が見てるけど？','みんな〜このオペレーターどう思う〜？','コメント欄、荒れちゃうよ？'],'今日の配信、神回確定〜！','#大炎上 トレンド1位おめでとう♡',true),
+ C('nijuu','二重人格マダム','🎭',{hair:'perm',hairC:'#6a2a4a',top:'dress',topC:'#3a2a5a',acc:['pearls','sunglasses'],shoes:'loafer',shoeC:'#a01818',prop:'fan',propC:'#5a1a3a'},[['emp','chat'],['rule','firm']],['offer'],86,8,'swap',
+   'サロン','#c8a0c8',['あら、ごきげんよう…（にっこり）','……ふざけんじゃないわよ！！！','聞いてるの？（優しい声）'],'あら、気分が晴れたわ。オホホ','両方の私が怒ってるわよ！！',true),
+ C('loop','無限ループ男','♾️',{hair:'curly',hairC:'#2a3a2a',acc:['glasses'],top:'hoodie',topC:'#6a7a5a',accC:'#3a4a3a',botC:'#3a3a3a',prop:'receipt'},[['ask','log']],['wait','chat'],84,12,'loop',
+   '無限回廊','#a8c0a8',['で、話を最初に戻すとね','だから何回も言ってるけど','つまり、最初の話なんだけど'],'…あ、ループ終わった。ありがとう','最初からもう一回説明して？',true),
+ C('oogui','怒りの大食い女王','🍔',{hair:'bun',hairC:'#d05a2a',top:'apron',topC:'#ffffff',accC:'#e04848',bottom:'pants',botC:'#333',build:1.35,prop:'ramen',mouth:'grin',heads:2.8},[['offer','chat'],['fun'],['offer','emp']],['apo','log'],90,8,'rotate',
+   'フードコート','#ffc870',['大盛りって言ったのに普通盛りなんだけど！','お腹が空くとイライラするのよ！','おかわり無料って書いてあったでしょ！'],'ごちそうさま！今日も完食！','空腹の怒りを思い知れぇ！',true),
+ C('hyoronka','クレーム評論家','🧐',{hair:'slick',hairC:'#5a5a5a',acc:['glasses','bowtie','mustache'],top:'suit',topC:'#4a3a5a',accC:'#d4a020',botC:'#3a2a4a',shoes:'loafer',shoeC:'#111',prop:'pen'},[['boss','rule'],['log'],['boss','firm']],['apo','fun','flat'],92,8,'rotate',
+   '評論家の書斎','#b8a890',['君の対応を100点満点で採点しよう','ありきたりな謝罪は減点だよ','私の著書『クレームの美学』は読んだかね？'],'……満点だ。脱帽だよ。','0点！私のブログで酷評しよう！',true),
+ C('daiou','クレーマー大王','👑',{hair:'afro',hairC:'#3a2a1a',hat:'crown',acc:['cape','mustache','sunglasses'],top:'suit',topC:'#6a1a3a',accC:'#d4a020',botC:'#3a1a2a',shoes:'boots',shoeC:'#d4a020',build:1.6,height:1.25,heads:3.2,prop:'scepter',brows:'thick'},[['apo','emp'],['log','rule'],['flat','boss'],['fun','offer'],['firm','ask'],['wait','chat']],[],98,12,'rotate1 viral',
+   '大王の玉座','#5a1a2a',['ワシこそがクレーマーの頂点、大王であるぞ！','全てのクレーマーの怒りを背負っておる！','七日間よく耐えたな…だがここまでだ！'],'見事なり…オペレーターよ、そなたこそ伝説じゃ。','大王の怒り、全世界に轟けぇぇ！',true),
+];
+const NORMAL_CLAIMERS=CLAIMERS.filter(c=>!c.boss);
+const BOSSES=CLAIMERS.filter(c=>c.boss);
+
+/* ---------- 返答（36種） ----------
+ [id, ラベル, セリフ, タグ, 威力, メンタル消費, 特殊] */
+const R_=(id,label,line,tags,pow,cost,sp={})=>({id,label,line,tags,pow,cost,...sp});
+const RESPONSES=[
+ R_('sorry','心から謝罪する','誠に申し訳ございません！',['apo'],12,3),
+ R_('dogeza','土下座の勢いで謝る','この通りでございます…！！',['apo'],19,8),
+ R_('empathy','気持ちに寄り添う','それは本当にお辛かったですね…',['emp'],12,3),
+ R_('callname','名前で呼びかける','〇〇様、お気持ちお察しします',['emp'],9,1),
+ R_('thanks','感謝を伝える','貴重なご意見ありがとうございます！',['emp','flat'],10,2),
+ R_('logic','論理的に説明する','順を追ってご説明いたしますと…',['log'],13,4),
+ R_('data','データで反論する','統計上、不具合率は0.002%でして…',['log'],18,6),
+ R_('jargon','専門用語で煙に巻く','APIのレイテンシがスループットに…',['log','fun'],15,2,{risky:1}),
+ R_('rule','利用規約を読み上げる','規約第7条によりますと…',['rule'],13,2),
+ R_('manual','マニュアル通りに読む','お客様のご意見として承ります',['rule'],8,0),
+ R_('record','録音を告知する','この通話は品質向上のため録音されております',['firm','rule'],14,3),
+ R_('firm','毅然と断る','恐れ入りますが、お受けできかねます',['firm'],17,5),
+ R_('pun','ダジャレで和ませる','クレームだけに、クリームでもいかがですか？',['fun'],15,3),
+ R_('singhold','保留音を自分で歌う','♪テレレレ〜テレレ〜♪',['fun','wait'],12,2),
+ R_('praise','ひたすら褒める','さすがお目が高い！',['flat'],13,2),
+ R_('bukyuden','武勇伝を聞く','ぜひ若い頃のお話を聞かせてください！',['flat','chat'],14,3),
+ R_('agree','「おっしゃる通りです」','おっしゃる通りでございます',['flat'],8,1),
+ R_('ask','事実を確認する','恐れ入ります、詳しく教えていただけますか？',['ask'],6,1,{reveal:1}),
+ R_('repeat','復唱して確認する','つまり〇〇ということですね？',['ask','emp'],8,2),
+ R_('offer','代替品を提案する','代わりにこちらの新商品はいかがでしょう？',['offer'],13,3),
+ R_('coupon','クーポンを渡す（5コイン）','お詫びに特別クーポンをお送りします！',['offer'],22,1,{coin:5}),
+ R_('promise','再発防止を約束する','二度と起きないよう徹底いたします',['apo','offer'],13,4),
+ R_('hold','保留にする','少々お待ちくださいませ（ふぅ…）',['wait'],5,0,{heal:7}),
+ R_('silence','沈黙で受け止める','………（静かに頷く）',['wait'],9,1),
+ R_('boss','上司に代わる','上の者に代わります！（1通話1回・スコア-30）',['boss'],26,0,{once:1}),
+ R_('weather','天気の話をする','ところで今日はいいお天気ですね',['chat'],10,1),
+ R_('pet','ペットの話題を振る','もしかしてワンちゃん飼われてます？',['chat','emp'],12,2),
+ R_('reverse','逆に相談してみる','実は私も最近悩みがありまして…',['chat','fun'],15,2,{risky:1}),
+ R_('breath','深呼吸する','（すー…はー…）落ち着け自分',[],0,0,{heal:14,anger:4}),
+ R_('tea','お茶をすすって間を取る','（ずずっ）…なるほど',['wait','chat'],7,0,{heal:4}),
+ R_('callback','折り返しを約束する','後ほど担当から折り返しいたします',['offer','wait'],10,2,{pat:2}),
+ R_('zen','悟りを開く','怒りもまた、宇宙の一部…',['wait','emp'],11,0,{heal:3}),
+ R_('mirror','相手の口調を真似る','（同じテンションで）それな！！',['fun','firm'],16,3,{risky:1}),
+ R_('kami','必殺「神対応」','お客様の全てを受け止めます！！（1日1回）',TAGKEYS,40,5,{daily:1,unlock:1}),
+ R_('transfer','内線でたらい回し','担当部署にお繋ぎしますね〜',['boss','wait'],20,0,{unlock:1}),
+ R_('lullaby','子守唄を歌う','♪ねんねんころりよ〜♪',['wait','fun'],20,2,{unlock:1}),
+];
+
+/* ---------- ショップ（18種） ---------- */
+const SHOP=[
+ {id:'headset',n:'高級ヘッドセット',i:'🎧',p:40,d:'毎ターンの被ダメージ -1'},
+ {id:'plant',n:'観葉植物',i:'🪴',p:30,d:'通話開始時メンタル +4（机に置かれる）'},
+ {id:'manual',n:'神マニュアル',i:'📘',p:60,d:'選択肢が12個→14個に'},
+ {id:'karte',n:'顧客カルテ',i:'🗂️',p:50,d:'通話開始時に弱点を1つ判明'},
+ {id:'ball',n:'ストレスボール',i:'🔴',p:25,d:'深呼吸の回復量 2倍'},
+ {id:'coffee',n:'コーヒーメーカー',i:'☕',p:35,d:'朝のメンタル回復 +15'},
+ {id:'jokebook',n:'笑いの教本',i:'📗',p:45,d:'ユーモア系の効果 1.3倍'},
+ {id:'apobook',n:'謝罪の極意',i:'📕',p:45,d:'謝罪系の効果 1.3倍'},
+ {id:'logicnote',n:'論破ノート',i:'📓',p:45,d:'論理系の効果 1.3倍'},
+ {id:'flatter',n:'おだて辞典',i:'📙',p:45,d:'おだて系の効果 1.3倍'},
+ {id:'music',n:'クラシック保留音',i:'🎻',p:30,d:'待ち系の効果 1.5倍'},
+ {id:'kami',n:'必殺技「神対応」',i:'✨',p:120,d:'全タグ扱いの必殺技（1日1回）'},
+ {id:'omamori',n:'炎上除けお守り',i:'🧧',p:40,d:'1日1回、炎上を防ぐ'},
+ {id:'booth',n:'防音ブース',i:'🚪',p:70,d:'逆効果で増える怒り -40%'},
+ {id:'transfer',n:'内線マスター',i:'☎️',p:40,d:'「内線でたらい回し」を習得'},
+ {id:'lullaby',n:'子守唄CD',i:'💿',p:50,d:'「子守唄を歌う」を習得'},
+ {id:'ticket',n:'社員食堂チケット',i:'🍱',p:20,d:'消耗品：メンタル +30',cons:1},
+ {id:'energy',n:'エナジードリンク',i:'🥫',p:15,d:'消耗品：メンタル +15・コンボ +1',cons:1},
+];
+
+/* ---------- 通話の合間イベント（18種） ---------- */
+const EVENTS=[
+ {n:'差し入れのドーナツ',i:'🍩',d:'先輩からドーナツ！メンタル +15',f:S=>{S.mental=Math.min(S.maxMental,S.mental+15);}},
+ {n:'上司の見回り',i:'👀',d:'次の通話のスコアが2倍！',f:S=>{S.flags.scoreX=2;}},
+ {n:'隣の先輩のアドバイス',i:'🗣️',d:'次のクレーマーの弱点を1つ教えてもらえる',f:S=>{S.flags.reveal=(S.flags.reveal||0)+1;}},
+ {n:'回線不良',i:'📶',d:'次の通話は忍耐ターン -1',f:S=>{S.flags.patMinus=1;}},
+ {n:'エアコン故障',i:'🥵',d:'オフィスが暑い…メンタル -10',f:S=>{S.mental=Math.max(1,S.mental-10);}},
+ {n:'給料日',i:'💴',d:'コイン +20',f:S=>{S.coins+=20;}},
+ {n:'猫がオフィスに乱入',i:'🐈',d:'癒された！メンタル +20',f:S=>{S.mental=Math.min(S.maxMental,S.mental+20);}},
+ {n:'社長の朝礼',i:'🎙️',d:'話が長い…メンタル -5、でも金一封 コイン +10',f:S=>{S.mental=Math.max(1,S.mental-5); S.coins+=10;}},
+ {n:'満月の夜',i:'🌕',d:'次のクレーマーは怒り +15',f:S=>{S.flags.angerPlus=15;}},
+ {n:'ラッキーデー',i:'🍀',d:'コンボ +2 からスタート',f:S=>{S.flags.comboStart=2;}},
+ {n:'宝くじ当選',i:'🎫',d:'コイン +50！',f:S=>{S.coins+=50;}},
+ {n:'同期の励まし',i:'🤝',d:'メンタル +10',f:S=>{S.mental=Math.min(S.maxMental,S.mental+10);}},
+ {n:'システム障害',i:'🧯',d:'次のクレーマーは怒り +10、でも報酬1.5倍',f:S=>{S.flags.angerPlus=10; S.flags.rewardX=1.5;}},
+ {n:'謎の花束',i:'💐',d:'差出人不明。メンタル +8',f:S=>{S.mental=Math.min(S.maxMental,S.mental+8);}},
+ {n:'雨の日',i:'☔',d:'みんなイライラ。次の怒り +5',f:S=>{S.flags.angerPlus=5;}},
+ {n:'新人研修の講師',i:'👩‍🏫',d:'教えて学ぶ。最大メンタル +5',f:S=>{S.maxMental+=5; S.mental+=5;}},
+ {n:'お客様の声で表彰',i:'🏅',d:'スコア +100',f:S=>{S.score+=100;}},
+ {n:'自販機の当たり',i:'🥤',d:'エナジードリンクを1本ゲット',f:S=>{S.cons.energy=(S.cons.energy||0)+1;}},
+];
+/* ---------- 通話中の突発イベント（6種） ---------- */
+const CALL_EVENTS=[
+ {n:'相手にキャッチホン',d:'相手が別の電話に…忍耐 +1',f:(S,K)=>{K.pat++;}},
+ {n:'相手の犬が吠えた',d:'「こら、ポチ！」少し和んだ。怒り -6',f:(S,K)=>{K.anger-=6;}},
+ {n:'回線ノイズ',d:'ザザッ…選択肢がシャッフルされた',f:(S,K)=>{}},
+ {n:'先輩が背中をさする',d:'メンタル +6',f:(S,K)=>{S.mental=Math.min(S.maxMental,S.mental+6);}},
+ {n:'相手が鍋を焦がした',d:'「あっ火が！」怒り +6',f:(S,K)=>{K.anger+=6;}},
+ {n:'窓の外に虹',d:'お互い虹を見て一息。怒り -4、メンタル +4',f:(S,K)=>{K.anger-=4; S.mental=Math.min(S.maxMental,S.mental+4);}},
+];
+/* ---------- 実績（14種） ---------- */
+const ACHIEVEMENTS=[
+ ['first','はじめての撃退','クレーマーを初めて撃退した'],
+ ['streak5','五連撃退','5回連続で撃退した'],
+ ['quick','秒殺','2ターン以内に撃退した'],
+ ['fire','炎上デビュー','初めて炎上させてしまった'],
+ ['perfectday','完璧な一日','1日の通話を全て撃退した'],
+ ['boss','ボス撃破','ボスクレーマーを撃退した'],
+ ['combo5','コンボマスター','5コンボを達成した'],
+ ['rich','小金持ち','コインを100枚以上持った'],
+ ['dex10','図鑑コレクター','クレーマーに10種類出会った'],
+ ['noboss','自力の人','上司に頼らずボスを撃退した'],
+ ['survivor','ギリギリの生還','メンタル5以下で撃退した'],
+ ['legend','7日間完走','7日目まで勤め上げた'],
+ ['daiou','大王討伐','クレーマー大王を撃退した'],
+ ['shop5','買い物上手','ショップで5個以上買った'],
+];
+/* ---------- ランク（9段階） ---------- */
+const RANKS=[[0,'新人オペレーター'],[600,'見習いオペレーター'],[1500,'一人前オペレーター'],[2800,'主任'],[4200,'係長'],[6000,'課長'],[8000,'部長'],[10500,'クレーム撃退マスター'],[13500,'伝説のオペレーター']];
+const GOOD_LINES=['…まぁ、そういうことなら','ふん、わかってるじゃないか','ちょっと落ち着いてきたわ','なるほどね…','悪くない返しだ','む…言われてみれば'];
+const MID_LINES=['で？','それで？','話を続けなさい','うーん…','ふーん','それだけ？'];
+const BAD_LINES=['なんだその態度は！','火に油だぞ！！','ふざけてるのか！？','もう我慢ならん！','ムキーーッ！','話にならない！'];
+/* ---------- システムのアイデア（アイデア帳用） ---------- */
+const SYSTEM_IDEAS=['12タグの相性システム（弱点2倍・耐性で逆効果）','弱点は最初❓で隠れていて、当てると判明','耐性も逆効果を受けると判明','毎ターン12個（最大14個）の選択肢をランダム配布','弱点が判明した選択肢に◎マーク','怒りゲージ100で「炎上」','怒りゲージ0で「撃退」→ふっとび演出','忍耐ターンが尽きると時間切れ','クレーマーの怒りでメンタルが削られる','メンタル0でゲームオーバー（有給休暇へ）','弱点連続ヒットでコンボ倍率アップ','7日間のキャンペーン','毎日最後はボスクレーマー','ボスは弱点が途中で入れ替わる','インフルエンサー系は炎上ペナルティ2倍','酔っ払いは怒りがランダムに揺れる','元同業者には保留が通じない','間違い電話は質問で一発解決','無限ループ男は一度だけ話を最初に戻す','怒りの強さで表情が変化（激怒・不機嫌・おだやか）','撃退されると目がぐるぐるになってふっとぶ','炎上すると3Dの炎が燃え上がる','💢マークが怒りに合わせて大きくなる','背景色が怒りに合わせて赤く染まる','オペレーターのモーションが状況で変化','着信音と効果音（Web Audio）','スマホのバイブ演出','日報（その日の成績表）','ショップで買った観葉植物やコーヒーメーカーが机に並ぶ','消耗品の持ち物メニュー','クレーマー図鑑（出会うと登録）','実績システム','ランク称号','ハイスコア保存','オペレーター6人から選択','3Dモデル工房（全キャラ・全モーション・表情を確認）'];
+
+/* =========================================================
+   追加データ：実力行使（ドタバタ系）・音声
+   ========================================================= */
+TAGS.force={n:'実力行使',i:'💥',c:'#d0302a'}; TAGKEYS.push('force');
+const CL=id=>CLAIMERS.find(c=>c.id===id);
+['kinniku','yopparai','robot','kansai','gamer'].forEach(id=>CL(id).weak.push('force'));
+['obaachan','maigo','papa','bengoshi','seigi','influencer','okusama'].forEach(id=>CL(id).res.push('force'));
+CL('onigawara').weak[1].push('force'); CL('oogui').weak[1].push('force'); CL('daiou').weak.push(['force','fun']);
+RESPONSES.push(
+ R_('harisen','電話越しにハリセン','なんでやねん！！（スパーン）',['force','fun'],22,2,{fx:'harisen',compla:8}),
+ R_('tarai','遠隔タライ落とし','お客様、上をご覧ください',['force'],26,2,{fx:'tarai',compla:12}),
+ R_('denki','回線に電流を流す','ビリビリ対応いたします',['force'],30,3,{fx:'denki',compla:18}),
+ R_('whistle','爆音ホイッスル','ピィィィーーーッ！！',['force','firm'],18,1,{fx:'whistle',compla:6}),
+ R_('otoshiana','落とし穴スイッチ','足元にお気をつけください（ポチッ）',['force'],34,3,{fx:'otoshiana',compla:20}),
+ R_('senpuki','巨大扇風機を回す','強風モードでお送りします',['force','wait'],24,2,{fx:'fan',compla:10}),
+ R_('pie','パイを投げつける','お詫びの気持ちです！えいっ！',['force','fun'],22,2,{fx:'pie',compla:9}),
+ R_('salt','清めの塩をまく','悪霊退散！悪霊退散！',['force','fun'],17,1,{fx:'salt',compla:5}),
+ R_('stare','無言の圧をかける','…………（ゴゴゴゴゴ）',['force','firm'],20,2,{fx:'stare',compla:4}),
+ R_('wrestle','電話越しプロレス技','ジャーマン・スープレックス！！',['force'],28,4,{fx:'wrestle',compla:15}),
+ R_('rocket','宇宙へ送還（ロケット）','良い宇宙の旅を！',['force'],45,3,{fx:'rocket',compla:30,unlock:1}),
+ R_('bomb','受話器を爆発させる','3、2、1…ドカン！',['force'],40,4,{fx:'bomb',compla:28,unlock:1}),
+ R_('security','警備員ゴリラを派遣','山田さん、お願いします！',['force','boss'],38,0,{fx:'security',compla:22,unlock:1}),
+);
+const unlockR=(S,id)=>S.unlocked.add(id);
+EVENTS.push(
+ {n:'クレーマーが窓から突入！',i:'🪟',d:'警備員ゴリラ山田が投げ飛ばした！スコア +80・メンタル -5',f:S=>{S.score+=80; S.mental=Math.max(1,S.mental-5);}},
+ {n:'上司が竹刀で喝！',i:'🎋',d:'「気合いだ！」メンタル -8、次の通話はコンボ +1から',f:S=>{S.mental=Math.max(1,S.mental-8); S.flags.comboStart=1;}},
+ {n:'武器庫の鍵を拾った',i:'🔑',d:'次の通話は実力行使の威力 1.5倍',f:S=>{S.flags.forceX=1.5;}},
+ {n:'先輩が電話機を叩き割った',i:'🔨',d:'スカッとした！メンタル +12・コンプラ違反度 +10',f:S=>{S.mental=Math.min(S.maxMental,S.mental+12); S.compla+=10;}},
+ {n:'隣の島で大乱闘',i:'🥊',d:'巻き込まれた…メンタル -10、でも野次馬でスコア +60',f:S=>{S.mental=Math.max(1,S.mental-10); S.score+=60;}},
+ {n:'停電で真っ暗',i:'🌑',d:'相手もビビっている。次のクレーマーの怒り -12',f:S=>{S.flags.angerPlus=-12;}},
+ {n:'筋トレ部に入部',i:'🏋️',d:'実力行使の威力が永久に +10%',f:S=>{S.forceBonus+=0.1;}},
+ {n:'社長のロケット発射実験',i:'🚀',d:'「宇宙へ送還（ロケット）」を習得！',f:S=>{unlockR(S,'rocket');}},
+ {n:'ゴリラ山田と友達になった',i:'🦍',d:'「警備員ゴリラを派遣」を習得！',f:S=>{unlockR(S,'security');}},
+ {n:'謎の爆弾処理班',i:'💣',d:'余った爆弾をもらった。「受話器を爆発させる」を習得（コンプラ +10）',f:S=>{unlockR(S,'bomb'); S.compla+=10;}},
+ {n:'人事部の抜き打ち監査',i:'🕵️',d:'コンプラ違反度が50以上だと…',f:S=>{ if(S.compla>=50){ S.score=Math.max(0,S.score-150); return 'バレた！スコア -150'; } S.score+=80; return '模範社員として表彰！スコア +80'; }},
+ {n:'クレーマー連合の襲撃予告',i:'📨',d:'次のクレーマーの怒り +20、撃退報酬 2倍',f:S=>{S.flags.angerPlus=20; S.flags.rewardX=2;}},
+ {n:'もみ消し課長の助け舟',i:'🕶️',d:'「見なかったことにしよう」コンプラ違反度 -30',f:S=>{S.compla=Math.max(0,S.compla-30);}},
+);
+CALL_EVENTS.push(
+ {n:'相手がタンスの角に小指を強打',d:'「いっ…！」気が散って怒り -8',f:(S,K)=>{K.anger-=8;}},
+ {n:'相手の家にタライが偶然落下',d:'ガーン！怒り -12',f:(S,K)=>{K.anger-=12; K.fxQueue='tarai';}},
+ {n:'回線から逆流電撃',d:'自分がビリビリ…メンタル -6',f:(S,K)=>{S.mental=Math.max(1,S.mental-6);}},
+ {n:'相手の背後で花火が暴発',d:'ドカーン！びっくりして怒り +5',f:(S,K)=>{K.anger+=5; K.fxQueue='boom';}},
+);
+SHOP.push(
+ {id:'momikeshi',n:'もみ消し係',i:'🕶️',p:50,d:'コンプラ違反度の上昇 -40%'},
+ {id:'protein',n:'プロテイン',i:'🥛',p:45,d:'実力行使の効果 1.3倍'},
+ {id:'rocket',n:'秘密兵器ロケット',i:'🚀',p:80,d:'「宇宙へ送還」を習得'},
+ {id:'bomb',n:'爆弾受話器',i:'💣',p:70,d:'「受話器を爆発させる」を習得'},
+ {id:'security',n:'警備員ゴリラ契約',i:'🦍',p:60,d:'「警備員ゴリラを派遣」を習得'},
+ {id:'jidan',n:'示談金',i:'💼',p:25,d:'消耗品：コンプラ違反度 -40',cons:1},
+);
+ACHIEVEMENTS.push(
+ ['violent10','武闘派オペレーター','実力行使を10回使った'],['space','宇宙送還','ロケットでクレーマーを撃退した'],
+ ['hr','人事部の常連','人事部に呼び出された'],['pacifist','平和主義者','実力行使なしで1日を終えた'],['afro','アフロ職人','受話器爆発でクレーマーをアフロにした'],
+);
+SYSTEM_IDEAS.push('コンプラ違反度ゲージ（実力行使で上昇、100で人事部に呼び出し）','実力行使で撃退すると決め技ごとに退場演出が変わる（落とし穴・ロケット・強風・ゴリラ連行）','タライ・ハリセン・電撃・扇風機などの3D演出','受話器爆発でクレーマーがアフロになる','パイ投げでクリームまみれになる','おばあちゃんや子連れパパに実力行使すると逆効果','キャラごとの読み上げ音声（声の高さ・速さが違う）','LINE風の会話ログ（誰の発言か一目でわかる）','3D画面上の吹き出し（タイプライター表示）','音声ON/OFF切り替え');
+/* 声：[高さ, 速さ] */
+const VOICE={rikutsu:[0.8,1.15],obaachan:[1.5,0.75],shacho:[0.55,0.95],influencer:[1.8,1.25],sharei:[0.7,1.05],kiyaku:[1.0,1.3],kansai:[1.1,1.35],sekkachi:[0.9,1.6],point:[1.2,1.2],shokunin:[0.5,0.9],okusama:[1.6,1.0],doogyo:[1.2,1.15],gamer:[1.3,1.4],shijin:[0.9,0.75],kenko:[1.1,1.2],alien:[2.0,0.8],yopparai:[0.6,0.7],seigi:[1.0,1.25],machigai:[1.2,1.2],jichikai:[0.75,0.9],joren:[1.4,1.0],papa:[0.9,1.4],uranai:[0.8,0.8],robot:[0.3,1.0],enka:[0.6,0.8],kinniku:[0.4,1.0],maigo:[0.6,0.7],bengoshi:[0.8,1.1],gekikara:[1.0,1.4],renai:[1.6,1.15],
+ onigawara:[0.3,0.9],joutei:[2.0,1.2],nijuu:[1.3,1.0],loop:[0.9,1.3],oogui:[1.2,1.2],hyoronka:[0.7,0.95],daiou:[0.1,0.8]};
+const OP_VOICE=[[1.5,1.1],[0.7,1.0],[1.7,1.2],[1.6,1.05],[1.1,1.25],[1.2,0.95]];
+
+/* =========================================================
+   追加データ：悪口（毒舌）・警察・取り調べ
+   ========================================================= */
+TAGS.toxic={n:'毒舌',i:'🗯️',c:'#7a2a8a'}; TAGKEYS.push('toxic');
+['kansai','gamer','doogyo'].forEach(id=>CL(id).weak.push('toxic'));
+['obaachan','maigo','renai','okusama','shijin','sharei','papa'].forEach(id=>CL(id).res.push('toxic'));
+CL('hyoronka').weak[1].push('toxic'); CL('daiou').weak.push(['toxic','firm']);
+RESPONSES.push(
+ R_('hima','「お暇なんですか？」','失礼ですが、お暇なんですか？',['toxic'],20,1,{police:10}),
+ R_('boomerang','「それ、ブーメランですよ」','その発言、ご自身に刺さってません？',['toxic','log'],22,2,{police:9}),
+ R_('kagami','「一度鏡を見ては？」','一度、鏡をご覧になってはいかがでしょう',['toxic'],24,2,{police:14}),
+ R_('zense','「前世もクレーマーでした？」','もしかして前世もクレーマーでした？',['toxic','fun'],20,1,{police:10}),
+ R_('urusai','「声がデカすぎます」','声が大きすぎて受話器が割れそうです',['toxic','firm'],18,1,{police:8}),
+ R_('hanage','「鼻毛出てますよ」','（電話越しに）お客様、鼻毛が出ております',['toxic','fun'],19,1,{police:9}),
+ R_('jikyu','「時給に見合いません」','私の時給ではこのお話は聞けません',['toxic','firm'],21,2,{police:11}),
+ R_('dokuzetsu','毒舌モード全開','（深呼吸）……言わせてもらいますけどねぇ！！',['toxic'],32,3,{police:22}),
+);
+SHOP.push(
+ {id:'lawyer',n:'顧問弁護士の名刺',i:'⚖️',p:60,d:'取り調べで疑いが下がりやすくなる'},
+ {id:'mask',n:'変声マスク',i:'😷',p:40,d:'通報度の上昇 -40%'},
+);
+EVENTS.push(
+ {n:'パトカーが会社の前を通過',i:'🚓',d:'ドキッ…！通報度 +10',f:S=>{S.police+=10;}},
+ {n:'交番のおまわりさんと世間話',i:'👮',d:'いい人アピール成功。通報度 -15',f:S=>{S.police=Math.max(0,S.police-15);}},
+);
+ACHIEVEMENTS.push(['arrest','御用だ！','警察に捕まった'],['free','無罪放免','取り調べで釈放された'],['jail','塀の中','実刑判決を受けた']);
+SYSTEM_IDEAS.push('悪口（毒舌）返答8種','🚓通報度ゲージ（実力行使・悪口で上昇）','通報度が高いと「たまに」警察に逮捕される','逮捕イベント（サイレン・パトカー・警官2人が突入して連行）','取り調べミニゲーム（毎ラウンド12択×4ラウンド）','刑事は人情派・理論派・短気の3タイプ（セリフから推理）','疑い度と刑事の機嫌の2ゲージ','判決：釈放／罰金・執行猶予／実刑（ゲームオーバー）','実刑だと牢屋の3Dシーンで懲役年数が出る','前科が増えるほど判決が厳しくなる');
+const POLICE_H={hat:'cap',hatC:'#1a2a5a',hair:'short',hairC:'#222',top:'jacket',topC:'#1a2a5a',accC:'#a8c0e0',bottom:'pants',botC:'#1a2a5a',shoes:'loafer',shoeC:'#111',acc:['badge'],eyes:'sharp',brows:'thick',mouth:'flat',heads:3.3};
+const DETECTIVE_H={hair:'slick',hairC:'#3a3a3a',top:'suit',topC:'#8a7a5a',accC:'#5a2a2a',bottom:'pants',botC:'#5a4a3a',shoes:'loafer',shoeC:'#2a1a1a',acc:['mustache'],brows:'thick',eyes:'sharp',mouth:'frown',heads:3.4,build:1.15,wrinkle:true};
+const DET_TYPES={
+  ninjo:{n:'人情派',intro:'まあ座れ。…わしにも娘がおってな。正直に話してくれんか',v:[0.6,0.85]},
+  riron:{n:'理論派',intro:'感情はいらん。証拠と事実だけで話そう',v:[0.9,1.15]},
+  tanki:{n:'短気',intro:'さっさと吐け！こっちは忙しいんだ！',v:[0.5,1.3]},
+};
+const DET_Q=['なぜお客にあんなことをしたんだ？','通話記録はすべて残っているぞ','被害者は相当お怒りだ。わかってるのか？','前にも似たようなことをやっただろう','本当に反省しているのか？','会社はお前を守ってくれんぞ','動機は何だ？ストレスか？','最後に言い残すことは？'];
+/* 取り調べの返答 [id,ラベル,セリフ,疑い,機嫌,{タイプ別補正}] */
+const INT_OPTS=[
+ ['honest','正直に全部話す','はい…全部お話しします',-12,5,{ninjo:-8,riron:-4}],
+ ['bow','深々と頭を下げる','本当に申し訳ありませんでした！',-8,8,{ninjo:-6,tanki:-3}],
+ ['silent','黙秘権を行使する','………（黙秘します）',5,-10,{riron:-7,tanki:10}],
+ ['lawyer','弁護士を呼んでもらう','弁護士を呼んでいただけますか',-5,-8,{riron:-5}],
+ ['katsudon','カツ丼を要求する','あの…カツ丼って出ますか？',0,-10,{ninjo:-6,tanki:8}],
+ ['cry','泣き落とし','うっ…ううっ…（号泣）',5,0,{ninjo:-20,tanki:6}],
+ ['alibi','嘘のアリバイを主張','その時間、私は火星にいました',0,-5,{}],
+ ['blame','上司のせいにする','全部、上司の指示なんです！',-6,-5,{riron:4}],
+ ['provoke','「相手が先にキレたんです」','先に怒鳴ってきたのは向こうなんです',-10,0,{riron:-6,ninjo:-2}],
+ ['record','通話録音を提出する','録音データ、こちらに全部あります',-8,3,{riron:-14}],
+ ['gyakugire','逆ギレする','俺は悪くねぇ！！',20,-20,{tanki:15}],
+ ['praise','刑事さんをおだてる','刑事さん、ドラマの主人公みたいですね',0,12,{tanki:-10,riron:6}],
+ ['joke','冗談で場を和ませる','取り調べだけに、取り越し苦労ですね！',4,4,{ninjo:-6,tanki:12}],
+ ['meditate','瞑想して落ち着く','（すぅ…）心を無にします',0,0,{}],
+ ['yozai','余罪まで自白する','実は小学生の時、給食のプリンを2個…',25,15,{ninjo:-5}],
+ ['chikai','二度としないと誓う','神に誓って、二度とやりません！',-10,5,{tanki:-3}],
+];
+const DET_REACT={good:['…ふむ、なるほどな','そうか…わかった','嘘はついていないようだな','少しは信じてやろう'],bad:['ふざけてるのか！？','ますます怪しいな…','机をバンッ！（叩く）','お前、自分の立場わかってるのか！'],mid:['…で？','続けろ','ほう','それだけか？']};
+/* =========================================================
+   シーン
+   ========================================================= */
+const $=s=>document.querySelector(s);
+const canvas=$('#c'), stage=$('#stage'), UI=$('#ui'), HUD=$('#hud'), POP=$('#pop');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+const scene=new THREE.Scene(); scene.background=new THREE.Color('#dfe8f2');
+const camera=new THREE.PerspectiveCamera(35,1,0.01,100);
+const controls=new OrbitControls(camera,canvas); controls.enableDamping=true; controls.maxPolarAngle=Math.PI*0.495; controls.minDistance=0.6; controls.maxDistance=10; controls.enabled=false;
+scene.add(new THREE.HemisphereLight(0xffffff,0xb0a090,1.5));
+const sun=new THREE.DirectionalLight(0xffffff,2.0); sun.position.set(1.5,4.5,3.5); sun.castShadow=true; sun.shadow.mapSize.set(1024,1024);
+{ const c=sun.shadow.camera; c.left=-3;c.right=3;c.top=3;c.bottom=-3;c.near=0.1;c.far=15; } sun.shadow.bias=-0.0005; sun.shadow.normalBias=0.02; scene.add(sun);
+const redLight=new THREE.PointLight(0xff3020,0,4); redLight.position.set(1,1.2,0.8); scene.add(redLight);
+
+function texText(text,w,h,opt={}){
+  const cv=document.createElement('canvas'); cv.width=w; cv.height=h; const g=cv.getContext('2d');
+  if(opt.bg){ g.fillStyle=opt.bg; g.fillRect(0,0,w,h); }
+  g.fillStyle=opt.color||'#222'; g.font=`${opt.weight||800} ${opt.size||Math.floor(h*0.6)}px "Hiragino Sans","Noto Sans JP",system-ui,sans-serif`;
+  g.textAlign='center'; g.textBaseline='middle'; g.fillText(text,w/2,h/2+(opt.dy||0));
+  const t=new THREE.CanvasTexture(cv); t.colorSpace=THREE.SRGBColorSpace; return t;
+}
+function emojiSprite(ch,size=0.3){ const t=texText(ch,128,128,{size:96,dy:6}); const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthWrite:false})); s.scale.set(size,size,size); s.renderOrder=5; return s; }
+
+/* ---------- オフィス（ゲーム用の舞台） ---------- */
+const gameG=new THREE.Group(); scene.add(gameG);
+const viewerG=new THREE.Group(); scene.add(viewerG); viewerG.visible=false;
+const floorL=new THREE.Mesh(new THREE.PlaneGeometry(3,3),mat('#b8c4d2',{roughness:1})); floorL.rotation.x=-Math.PI/2; floorL.position.set(-1.5,0,0.3); floorL.receiveShadow=true; gameG.add(floorL);
+const floorRMat=new THREE.MeshStandardMaterial({color:'#d8d0c0',roughness:1});
+const floorR=new THREE.Mesh(new THREE.PlaneGeometry(3,3),floorRMat); floorR.rotation.x=-Math.PI/2; floorR.position.set(1.5,0,0.3); floorR.receiveShadow=true; gameG.add(floorR);
+const wallL=new THREE.Mesh(new THREE.PlaneGeometry(3,3),mat('#eef2f7',{roughness:1})); wallL.position.set(-1.5,1.5,-1.0); wallL.receiveShadow=true; gameG.add(wallL);
+const bdMat=new THREE.MeshStandardMaterial({color:'#e0d0c0',roughness:1});
+const wallR=new THREE.Mesh(new THREE.PlaneGeometry(3,3),bdMat); wallR.position.set(1.5,1.5,-1.0); wallR.receiveShadow=true; gameG.add(wallR);
+{ const sign=new THREE.Mesh(new THREE.PlaneGeometry(0.9,0.22),new THREE.MeshBasicMaterial({map:texText('お客様相談室',512,128,{bg:'#2a4a7a',color:'#fff',size:64})})); sign.position.set(-1.05,1.85,-0.99); gameG.add(sign);
+  const clock=cyl(0.14,0.14,0.03,mat('#ffffff'),24); clock.rotation.x=Math.PI/2; clock.position.set(-1.9,1.75,-0.98); gameG.add(clock);
+  const hand=cube(0.01,0.1,0.01,'#222'); hand.position.set(-1.9,1.79,-0.96); gameG.add(hand); gameG.userData.clockHand=hand;
+  for(let i=0;i<3;i++){ const w=new THREE.Mesh(new THREE.PlaneGeometry(0.42,0.6),mat('#bfe0f5',{roughness:0.2,emissive:'#6fa0c0',emissiveIntensity:0.25})); w.position.set(-2.6+i*0.5,1.25,-0.995); gameG.add(w);} }
+const locSignMat=new THREE.MeshBasicMaterial({transparent:true});
+const locSign=new THREE.Mesh(new THREE.PlaneGeometry(1.0,0.25),locSignMat); locSign.position.set(1.0,1.85,-0.98); gameG.add(locSign);
+const divider=cube(0.04,2.8,1.6,mat('#ffffff',{emissive:'#7ab8ff',emissiveIntensity:0.5})); divider.position.set(0,1.4,-0.2); gameG.add(divider);
+const lineSprite=emojiSprite('📞',0.28); lineSprite.position.set(0,1.8,0.62); gameG.add(lineSprite);
+
+const opG=new THREE.Group(); opG.position.set(-0.95,0,0); opG.rotation.y=0.32; gameG.add(opG);
+const clG=new THREE.Group(); clG.position.set(1.0,0,0); clG.rotation.y=-0.32; gameG.add(clG);
+const deskG=new THREE.Group(); opG.add(deskG);
+const itemsG=new THREE.Group(); deskG.add(itemsG);
+let opRig=null, clRig=null, viewRig=null;
+let deskTop=0.6;
+function buildDesk(D){
+  deskG.clear(); itemsG.clear(); deskG.add(itemsG);
+  const seatHip=D.legLen-D.thigh, seatTop=seatHip-D.tw*0.45;
+  deskTop=seatHip+D.torsoLen*0.32-D.handR*1.0;
+  const zF=D.tw*1.25, depth=0.5, w=1.15;
+  const top=cube(w,0.035,depth,'#e8dcc8'); top.position.set(0,deskTop-0.018,zF+depth/2); top.receiveShadow=true; deskG.add(top);
+  for(const sx of [-1,1]){ const p=cube(0.04,deskTop-0.035,depth*0.9,'#c0b4a0'); p.position.set(sx*(w/2-0.03),(deskTop-0.035)/2,zF+depth/2); deskG.add(p); }
+  const seat=cube(D.tw*2.6,0.05,D.tw*2.4,'#3a4a6a'); seat.position.set(0,seatTop-0.025,-D.tw*0.1); deskG.add(seat);
+  const bk=cube(D.tw*2.5,D.torsoLen*0.9,0.05,'#3a4a6a'); bk.position.set(0,seatTop+D.torsoLen*0.5,-D.tw*1.35); bk.rotation.x=-0.08; deskG.add(bk);
+  const st=cyl(0.025,0.025,seatTop-0.08,mat('#666'),8); st.position.set(0,(seatTop-0.08)/2+0.06,-D.tw*0.1); deskG.add(st);
+  for(let i=0;i<5;i++){ const a=i/5*Math.PI*2; const l=cube(0.03,0.025,0.22,'#555'); l.position.set(Math.sin(a)*0.1,0.04,-D.tw*0.1+Math.cos(a)*0.1); l.rotation.y=a; deskG.add(l); }
+  const mon=new THREE.Group(); mon.position.set(-0.4,deskTop,zF+0.3); mon.rotation.y=0.5; deskG.add(mon);
+  mon.add(at(cube(0.36,0.24,0.025,'#2f3440'),0,0.2,0)); const scr=new THREE.Mesh(new THREE.PlaneGeometry(0.33,0.21),mat('#9ad8ff',{emissive:'#4a90c0',emissiveIntensity:0.6})); scr.rotation.y=Math.PI; scr.position.set(0,0.2,-0.014); mon.add(scr);
+  mon.add(at(cube(0.04,0.09,0.04,'#2f3440'),0,0.045,0)); mon.add(at(cube(0.14,0.012,0.1,'#2f3440'),0,0.006,0));
+  const kb=cube(0.3,0.015,0.1,'#f2f2f2'); kb.position.set(0,deskTop+0.008,zF+0.09); deskG.add(kb);
+  deskG.userData={zF,deskTop};
+}
+function refreshItems(){
+  itemsG.clear(); if(!S) return; const {zF,deskTop:dt}=deskG.userData; const I=S.items;
+  if(I.plant){ const pot=cyl(0.05,0.04,0.08,mat('#c8643a'),12); pot.position.set(0.45,dt+0.04,zF+0.35); itemsG.add(pot); for(let i=0;i<5;i++){ const l=sph(0.05,mat('#3d9b47'),10,8); l.scale.set(0.6,1.4,0.6); l.position.set(0.45+Math.cos(i*1.3)*0.03,dt+0.14,zF+0.35+Math.sin(i*1.3)*0.03); l.rotation.z=Math.cos(i*1.3)*0.4; itemsG.add(l);} }
+  if(I.coffee){ const m=cube(0.1,0.16,0.1,'#333'); m.position.set(0.3,dt+0.08,zF+0.4); itemsG.add(m); const cp=cyl(0.025,0.022,0.05,mat('#fff'),10); cp.position.set(0.22,dt+0.025,zF+0.2); itemsG.add(cp); }
+  if(I.manual||I.apobook||I.jokebook||I.logicnote||I.flatter){ const cols=['#2a5aa0','#c03030','#3a9a4a','#333','#e0901a']; let k=0;
+    for(const id of ['manual','apobook','jokebook','logicnote','flatter']) if(I[id]){ const b=cube(0.03,0.14,0.1,cols[k]); b.position.set(-0.15+k*0.035,dt+0.07,zF+0.42); itemsG.add(b); k++; } }
+  if(I.ball){ const b=sph(0.025,mat('#e03030')); b.position.set(0.15,dt+0.025,zF+0.12); itemsG.add(b); }
+  if(I.music){ const sp2=cube(0.06,0.1,0.06,'#6a4a2a'); sp2.position.set(0.05,dt+0.05,zF+0.42); itemsG.add(sp2); }
+  if(I.booth){ for(const sx of [-1,1]){ const p=cube(0.03,0.6,0.55,mat('#9ab0c8',{transparent:true,opacity:0.8})); p.position.set(sx*0.6,dt+0.3,zF+0.25); itemsG.add(p);} }
+  if(I.omamori){ const o=cube(0.03,0.045,0.008,'#e03030'); o.position.set(-0.3,dt+0.28,zF+0.2); itemsG.add(o); }
+  if(I.karte){ const k=cube(0.12,0.01,0.16,'#f5e6a0'); k.position.set(0.22,dt+0.006,zF+0.08); k.rotation.y=0.3; itemsG.add(k); }
+  if(I.headset){ const s=sph(0.03,mat('#7ad0c0')); s.position.set(-0.5,dt+0.03,zF+0.1); itemsG.add(s); }
+}
+function setOperator(i){
+  if(opRig){ opG.remove(opRig.root); disposeRig(opRig); }
+  opRig=buildHuman(Object.assign({seedT:0.3},OPERATORS[i][1])); opG.add(opRig.root); opRig.base='op_talk';
+  buildDesk(opRig.dims); refreshItems();
+}
+function setClaimer(c){
+  if(clRig){ clG.remove(clRig.root); disposeRig(clRig); clRig=null; }
+  flames.visible=false;
+  if(!c){ locSign.visible=false; return; } locSign.visible=true;
+  clRig=buildHuman(Object.assign({seedT:1.7},c.H)); clG.add(clRig.root); clRig.base='phone_angry';
+  bdMat.color.set(c.bg); floorRMat.color.set(shade(c.bg,-0.12)); bdBase.set(c.bg);
+  if(locSignMat.map) locSignMat.map.dispose(); locSignMat.map=texText('📍'+c.loc,512,128,{bg:'rgba(255,255,255,0.85)',color:'#333',size:56}); locSignMat.needsUpdate=true;
+}
+const bdBase=new THREE.Color('#e0d0c0');
+
+/* ---------- 演出 ---------- */
+const angerMark=emojiSprite('💢',0.25); scene.add(angerMark); angerMark.visible=false;
+const flames=new THREE.Group(); clG.add(flames); flames.visible=false;
+for(let i=0;i<14;i++){ const f=cone(0.07+Math.random()*0.05,0.3+Math.random()*0.3,new THREE.MeshStandardMaterial({color:i%2?'#ff7a1a':'#ffcc33',emissive:i%2?'#ff4000':'#ff9900',emissiveIntensity:1.2,transparent:true,opacity:0.85}),8);
+  const a=i/14*Math.PI*2; f.position.set(Math.cos(a)*0.32,0.2,Math.sin(a)*0.25); f.userData.ph=Math.random()*6; flames.add(f); }
+const fx=[];
+function burst(pos,chars,n=8,spd=1.2){ for(let i=0;i<n;i++){ const s=emojiSprite(chars[i%chars.length],0.14+Math.random()*0.1); s.position.copy(pos); scene.add(s);
+  fx.push({o:s,v:new THREE.Vector3((Math.random()-0.5)*spd,Math.random()*spd*1.2+0.3,(Math.random()-0.2)*spd*0.6),life:1.1}); } }
+function headPos(rig){ const v=new THREE.Vector3(); rig.head.getWorldPosition(v); return v; }
+let shake=0;
+
+/* ---------- サウンド ---------- */
+let AC=null;
+function au(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=null; } } if(AC&&AC.state==='suspended') AC.resume().catch(()=>{}); return AC; }
+function beep(f,d=0.12,type='sine',v=0.07,delay=0,f2){ const a=au(); if(!a||muted) return; const t=a.currentTime+delay; const o=a.createOscillator(), g=a.createGain(); o.type=type; o.frequency.setValueAtTime(f,t); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+d);
+  g.gain.setValueAtTime(v,t); g.gain.exponentialRampToValueAtTime(0.0001,t+d); o.connect(g).connect(a.destination); o.start(t); o.stop(t+d+0.02); }
+const SFX={
+  ring:()=>{ for(let i=0;i<4;i++){ beep(880,0.07,'square',0.04,i*0.09); beep(1100,0.07,'square',0.03,i*0.09+0.045);} },
+  click:()=>beep(660,0.05,'triangle',0.05),
+  good:()=>{ beep(523,0.1,'triangle',0.07); beep(784,0.14,'triangle',0.07,0.08); },
+  great:()=>{ [523,659,784,1047].forEach((f,i)=>beep(f,0.12,'triangle',0.07,i*0.06)); },
+  bad:()=>{ beep(180,0.25,'sawtooth',0.05,0,90); },
+  win:()=>{ [523,659,784,1047,1319].forEach((f,i)=>beep(f,0.18,'square',0.04,i*0.09)); beep(1568,0.4,'triangle',0.06,0.5); },
+  fire:()=>{ beep(400,0.6,'sawtooth',0.06,0,60); beep(300,0.6,'square',0.03,0.1,50); },
+  coin:()=>{ beep(988,0.06,'square',0.04); beep(1319,0.12,'square',0.04,0.06); },
+  hold:()=>{ [659,587,523,587,659,659,659].forEach((f,i)=>beep(f,0.18,'sine',0.05,i*0.2)); },
+};
+let muted=false;
+function vib(p){ try{ navigator.vibrate&&navigator.vibrate(p); }catch(e){} }
+
+/* ---------- セーブ ---------- */
+const SAVE_KEY='claimbuster_save_v1';
+let SAVE={best:0,ach:[],dex:[],dexWin:[],op:0,plays:0};
+try{ const j=localStorage.getItem(SAVE_KEY); if(j) SAVE=Object.assign(SAVE,JSON.parse(j)); }catch(e){}
+function persist(){ try{ localStorage.setItem(SAVE_KEY,JSON.stringify(SAVE)); }catch(e){} }
+
+/* =========================================================
+   ゲーム状態
+   ========================================================= */
+let S=null, K=null, mode='title';
+const CALLS_PER_DAY=4, LAST_DAY=7;
+function newGame(){
+  S={day:1,callIdx:0,mental:100,maxMental:100,score:0,coins:30,combo:0,maxCombo:0,items:{},cons:{ticket:0,energy:0},unlocked:new Set(),
+     kamiUsed:false,omamoriUsed:false,flags:{},compla:0,forceCount:0,forceBonus:0,dayForce:0,police:0,arrests:0,usedToday:new Set(),dayLog:[],streak:0,bought:0,bossUsedAll:false,totalWins:0};
+  SAVE.plays++; persist(); refreshItems(); dayStart();
+}
+function rankOf(sc){ let r=RANKS[0][1]; for(const [t,n] of RANKS) if(sc>=t) r=n; return r; }
+function unlockAch(id){ if(SAVE.ach.includes(id)) return; SAVE.ach.push(id); persist(); const a=ACHIEVEMENTS.find(x=>x[0]===id); toast(`🏆 実績解除：${a[1]}`); SFX.coin(); }
+function toast(msg){ const d=document.createElement('div'); d.className='toast'; d.textContent=msg; document.body.appendChild(d); setTimeout(()=>d.remove(),2600); }
+function popText(txt,cls=''){ POP.innerHTML=`<div class="popt ${cls}">${txt}</div>`; setTimeout(()=>{ if(POP.firstChild&&POP.firstChild.textContent===txt.replace(/<[^>]+>/g,'')) POP.innerHTML=''; },1700); }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+
+function dayStart(){
+  mode='day'; S.callIdx=0; S.usedToday=new Set(); S.dayLog=[]; S.kamiUsed=false; S.omamoriUsed=false; S.dayBossHelp=false; S.dayForce=0; if(S.day>1){ S.compla=Math.max(0,S.compla-10); S.police=Math.max(0,S.police-15); } hideBubbles(); clearFx();
+  if(S.day>1){ const rec=20+(S.items.coffee?15:0); S.mental=Math.min(S.maxMental,S.mental+rec); }
+  const boss=BOSSES[S.day-1];
+  setClaimer(null); setOp('sit_type','normal');
+  UI.innerHTML=`<div class="card center"><div class="big">📅 DAY ${S.day} <small>/ ${LAST_DAY}</small></div>
+   <p>本日の通話：${CALLS_PER_DAY}件（最後はボス）</p>
+   <div class="boss">⚠️ 本日のボス予告<br><b>${boss.em} ${boss.name}</b></div>
+   <p class="note">メンタル ${S.mental}/${S.maxMental}・コイン ${S.coins}${S.day>1?`<br>☕ 一晩休んでメンタル回復！`:''}</p>
+   <button class="btn" id="go">業務開始！</button></div>`;
+  $('#go').onclick=()=>{ SFX.click(); beforeCall(); };
+  renderHUD();
+}
+function beforeCall(){
+  if(S.callIdx>0&&S.callIdx<CALLS_PER_DAY-0&&Math.random()<0.4){
+    const ev=pick(EVENTS); const extra=ev.f(S)||''; S.mental=Math.max(1,S.mental);
+    mode='event';
+    UI.innerHTML=`<div class="card center"><div class="evi">${ev.i}</div><div class="big">${ev.n}</div><p>${ev.d}${extra?`<br><b class="red">${extra}</b>`:''}</p><button class="btn" id="go">次の電話へ</button></div>`;
+    $('#go').onclick=()=>{ SFX.click(); startCall(); }; renderHUD(); refreshItems(); return;
+  }
+  startCall();
+}
+function weakNow(){ const c=K.c; if(!c.boss) return c.weak; const ph=c.weak; const tr=c.trait;
+  if(tr.includes('swap')) return K.turn<Math.ceil(K.patMax/2)?ph[0]:ph[1];
+  if(tr.includes('rotate1')) return ph[K.turn%ph.length];
+  if(tr.includes('rotate')) return ph[Math.floor(K.turn/2)%ph.length];
+  return ph[0]; }
+function startCall(){
+  const isBoss=S.callIdx===CALLS_PER_DAY-1;
+  let c;
+  if(isBoss) c=BOSSES[S.day-1];
+  else { const pool=NORMAL_CLAIMERS.filter(x=>!S.usedToday.has(x.id)); c=pick(pool); }
+  S.usedToday.add(c.id);
+  const anger=Math.min(99,c.anger+(S.day-1)*2+(S.flags.angerPlus||0));
+  const pat=Math.max(3,c.pat-(S.flags.patMinus||0));
+  const fl=S.flags;
+  K={c,anger,patMax:pat,pat,turn:0,revealed:new Set(),resKnown:new Set(),bossUsed:false,combo:fl.comboStart||0,maxCombo:0,lineI:0,state:'ring',looped:false,scoreX:S.flags.scoreX||1,rewardX:S.flags.rewardX||1,forceX:S.flags.forceX||1,lastMsg:'',opLine:'',log:[],baseX:1.0};
+  clearFx(); hideBubbles(); stopSpeech();
+  S.flags={};
+  if(!SAVE.dex.includes(c.id)){ SAVE.dex.push(c.id); persist(); if(SAVE.dex.length>=10) unlockAch('dex10'); }
+  let rv=(S.items.karte?1:0)+(fl.reveal||0);
+  mode='ring'; setClaimer(c); clG.visible=false; flames.visible=false; clG.position.set(1.0,0,0); clG.rotation.set(0,-0.32,0); clG.scale.setScalar(1);
+  setOp('sit_type','shock');
+  UI.innerHTML=`<div class="card center ring"><div class="phone">📞</div><div class="big">プルルル…！</div><p>${isBoss?'<b class="red">⚠️ ボスからの着信！</b>':`着信 ${S.callIdx+1} / ${CALLS_PER_DAY}`}</p><button class="btn big2" id="ans">📞 応答する</button></div>`;
+  ringTimer=setInterval(()=>{ SFX.ring(); vib(120); },1100); SFX.ring();
+  $('#ans').onclick=()=>{ clearInterval(ringTimer); answer(rv); };
+  renderHUD();
+}
+let ringTimer=null;
+function revealOne(){ const w=weakNow().filter(t=>!K.revealed.has(t)); if(!w.length) return null; const t=pick(w); K.revealed.add(t); return t; }
+function answer(rv){
+  mode='call'; K.state='talk'; clG.visible=true; clG.scale.setScalar(0.01); K.popIn=T;
+  if(S.items.plant) S.mental=Math.min(S.maxMental,S.mental+4);
+  for(let i=0;i<rv;i++) revealOne();
+  if(pendingReveal){ for(let i=0;i<pendingReveal;i++) revealOne(); pendingReveal=0; }
+  K.lastMsg=K.c.lines[0]; K.opLine='お電話ありがとうございます！お客様相談室です！';
+  logPush('op',K.opLine); logPush('cl',K.lastMsg); setBubble('op',K.opLine,3); setTimeout(()=>{ if(K&&K.state==='talk') setBubble('cl',K.lastMsg,9); },900);
+  speak(K.opLine,opVoice()); speak(K.lastMsg,clVoice());
+  setOp('op_talk','normal'); dealHand(); renderCall(); renderHUD();
+}
+let pendingReveal=0;
+function dealHand(){
+  const n=S.items.manual?14:12;
+  const avail=RESPONSES.filter(r=>{ if(r.unlock&&!S.unlocked.has(r.id)) return false; if(r.once&&K.bossUsed) return false; if(r.daily&&S.kamiUsed) return false; return true; });
+  const danger=r=>(r.tags.includes('force')||r.tags.includes('toxic'))&&r.tags.length<TAGKEYS.length;
+  const d=shuffle(avail.filter(danger)).slice(0,3), nm=shuffle(avail.filter(r=>!danger(r))).slice(0,n);
+  K.hand=shuffle(nm.concat(d));
+}
+function tagMult(t){ const I=S.items; let m=1; if(t==='fun'&&I.jokebook) m=1.3; if(t==='apo'&&I.apobook) m=1.3; if(t==='log'&&I.logicnote) m=1.3; if(t==='flat'&&I.flatter) m=1.3; if(t==='wait'&&I.music) m=1.5; if(t==='force') m=(I.protein?1.3:1)*(1+(S.forceBonus||0))*(K?K.forceX:1); return m; }
+function choose(i){
+  if(mode!=='call') return; const r=K.hand[i]; if(!r) return;
+  if(r.coin){ if(S.coins<r.coin){ toast('コインが足りません'); return; } S.coins-=r.coin; }
+  SFX.click(); stopSpeech(); const c=K.c, weak=weakNow();
+  K.opLine=r.line.replace('〇〇',c.name.replace(/^.*の/,''));
+  let delta=0, kind='mid', msg='';
+  const weakHit=r.tags.some(t=>weak.includes(t)), resHit=r.tags.some(t=>c.res.includes(t));
+  if(r.once) { K.bossUsed=true; S.dayBossHelp=true; S.bossUsedAll=true; }
+  if(r.daily) S.kamiUsed=true;
+  if(r.heal){ const h=r.heal*(r.id==='breath'&&S.items.ball?2:1); S.mental=Math.min(S.maxMental,S.mental+h); msg+=`メンタル +${h}　`; }
+  if(r.pat){ K.pat+=r.pat; msg+=`忍耐 +${r.pat}　`; }
+  if(c.trait==='wrong'&&r.tags.includes('ask')){ K.anger=0; kind='great'; msg='「えっ…ここラーメン屋じゃない！？」 間違い電話だった！'; }
+  else if(c.trait==='pro'&&r.tags.includes('wait')&&!weakHit){ kind='bad'; delta=6; msg+='「保留で時間稼ぎ？知ってますよ」 通用しない！'; }
+  else if(r.pow>0){
+    let mult=1, best=1;
+    for(const t of r.tags) best=Math.max(best,tagMult(t));
+    if(weakHit){ mult=2; K.combo++; S.combo++; } else { K.combo=0; S.combo=0; mult=0.9; }
+    if(c.trait==='apoNeed'&&!r.tags.includes('apo')) mult*=0.6;
+    if(resHit&&!weakHit){
+      let up=r.pow*0.7*(S.items.booth?0.6:1); delta=Math.round(up); kind='bad'; msg+=`逆効果！ 怒り +${delta}`; r.tags.filter(t=>c.res.includes(t)).forEach(t=>K.resKnown.add(t));
+    } else {
+      if(r.risky){ if(Math.random()<0.55){ mult*=1.8; msg+='賭けが当たった！ '; } else { delta=10; kind='bad'; msg+='スベった！ 怒り +10'; } }
+      if(kind!=='bad'){
+        const cm=1+0.15*Math.min(Math.max(0,K.combo-1),5);
+        const v=Math.round(r.pow*mult*best*cm*rnd(0.88,1.12));
+        delta=-v; kind=weakHit?(K.combo>=3?'great':'good'):'mid';
+        if(weakHit){ r.tags.filter(t=>weak.includes(t)).forEach(t=>K.revealed.add(t)); msg+=`効果は抜群だ！ 怒り -${v}${K.combo>=2?`（${K.combo}コンボ！）`:''}`; }
+        else msg+=`怒り -${v}`;
+      }
+    }
+  } else if(r.anger){ delta=r.anger; msg+=`（相手を待たせた）怒り +${r.anger}`; }
+  if(r.reveal){ const t=revealOne(); msg+=t?`　🔎 弱点「${TAGS[t].n}」が判明！`:'　（もう弱点は判明している）'; }
+  K.anger=Math.max(0,Math.min(100,K.anger+delta));
+  K.maxCombo=Math.max(K.maxCombo,K.combo); S.maxCombo=Math.max(S.maxCombo,S.combo);
+  if(S.combo>=5) unlockAch('combo5');
+  // 特性
+  if(c.trait==='drunk'&&K.anger>0){ const d=Math.round(rnd(-10,8)); K.anger=Math.max(1,Math.min(100,K.anger+d)); msg+=`　🍺 酔いで怒りが${d>=0?'+':''}${d}`; }
+  if(c.trait==='loop'&&K.anger<=0&&!K.looped){ K.looped=true; K.anger=55; msg+='　♾️「で、話を最初に戻すとね」怒りが55に戻った！'; kind='bad'; }
+  // ダメージ
+  const dmg=Math.max(0,Math.floor(K.anger/22)+(kind==='bad'?3:0)-(S.items.headset?1:0))+r.cost;
+  if(K.anger>0) S.mental-=dmg;
+  K.turn++; K.pat--;
+  // 反応
+  if(kind==='great'){ SFX.great(); vib(30); act(clRig,'surprise',1.0,'shock'); act(opRig,'op_win',0.9,'happy'); burst(headPos(clRig),['✨','⭐'],6); }
+  else if(kind==='good'){ SFX.good(); act(clRig,'think',1.0,'grumpy'); if(r.tags.includes('apo')) act(opRig,'op_bow',1.0,'worried'); burst(headPos(clRig),['✨'],4); }
+  else if(kind==='bad'){ SFX.bad(); vib([60,40,60]); shake=0.25; act(clRig,pick(['yell','angry']),1.3,'angry'); act(opRig,'op_stress',1.3,'worried'); burst(headPos(clRig),['💢','💥'],5); }
+  else { act(clRig,'phone',0.6); if(r.id==='hold'||r.id==='singhold') SFX.hold(); }
+  if(r.tags.includes('apo')&&kind!=='bad') act(opRig,'op_bow',1.0,'worried');
+  K.lastLineKind=kind;
+  K.lastMsg=(kind==='bad'?pick(BAD_LINES):kind==='mid'?pick(MID_LINES):pick(GOOD_LINES));
+  K.result=msg;
+  K.lastFx=null;
+  if(r.fx){ S.forceCount++; S.dayForce++; K.lastFx=r.fx; if(S.forceCount>=10) unlockAch('violent10');
+    const cg=Math.round(r.compla*(S.items.momikeshi?0.6:1)); S.compla+=cg; K.result+=`　⚖️コンプラ違反度 +${cg}`;
+    doFx(r.fx,K.anger<=0);
+    if(S.compla>=100){ S.compla=40; S.score=Math.max(0,S.score-300); S.mental-=15; K.result+='　🚨人事部に呼び出された！スコア -300・メンタル -15'; unlockAch('hr'); toast('🚨 人事部に呼び出されました…'); } }
+  logPush('op',K.opLine); setBubble('op',K.opLine,2.5); speak(K.opLine,opVoice());
+  if(r.fx||r.police){ K.lastViolent=r.label; if(policeCheck(r)){ logPush('sys',K.result,K.lastLineKind); return setTimeout(startArrest,r.fx?1300:500); } }
+  // 終了判定
+  if(S.mental<=0){ S.mental=0; renderHUD(); return setTimeout(gameOver,900); }
+  if(K.anger<=0) return endCall('win');
+  if(K.anger>=100){ if(S.items.omamori&&!S.omamoriUsed){ S.omamoriUsed=true; K.anger=88; K.result+='　🧧 お守りが炎上を防いだ！'; } else return endCall('fire'); }
+  if(K.pat<=0) return endCall('timeout');
+  // 通話中イベント
+  if(Math.random()<0.12){ const e=pick(CALL_EVENTS); e.f(S,K); K.anger=Math.max(1,Math.min(99,K.anger)); K.result+=`　⚡${e.n}：${e.d}`; }
+  // 次のセリフ
+  const prevW=weak.join(); if(c.boss&&weakNow().join()!==prevW){ K.result+='　🔄 ボスの弱点が変化した！'; }
+  K.lineI++; if(Math.random()<0.55) K.lastMsg=c.lines[K.lineI%c.lines.length];
+  if(K.fxQueue){ doFx(K.fxQueue,false); K.fxQueue=null; }
+  logPush('sys',K.result,K.lastLineKind); logPush('cl',K.lastMsg); setTimeout(()=>{ if(K&&K.state==='talk') setBubble('cl',K.lastMsg,9); },r.fx?1100:600); speak(K.lastMsg,clVoice());
+  dealHand(); renderCall(); renderHUD();
+}
+function endCall(res){
+  mode='end'; K.state=res; const c=K.c;
+  let sc=0, coin=0, title='', line='', mentalD=0;
+  if(res==='win'){
+    sc=Math.round((100+K.pat*15+K.maxCombo*20)*(c.boss?3:1)*K.scoreX*K.rewardX)-(K.bossUsed?30:0);
+    coin=Math.round((c.boss?40:15)+K.pat*2*K.rewardX); mentalD=8; title='撃退成功！'; line=c.win;
+    S.streak++; S.totalWins++; SFX.win(); vib([40,30,40,30,120]);
+    K.finish={otoshiana:'sink',rocket:'up',fan:'side',security:'side'}[K.lastFx]||'blown';
+    setMotionNow(clRig,{sink:'surprise',up:'cheer',side:'dizzy'}[K.finish]||'blown'); clRig.expr='dizzy'; K.blownAt=T+(K.lastFx?0.9:0); act(opRig,'op_win',2.5,'happy');
+    if(K.lastFx==='rocket') unlockAch('space');
+    burst(headPos(clRig),['⭐','✨','💫','🎉'],14,2);
+    if(!SAVE.dexWin.includes(c.id)){ SAVE.dexWin.push(c.id); persist(); }
+    unlockAch('first'); if(S.streak>=5) unlockAch('streak5'); if(K.turn<=2) unlockAch('quick'); if(S.mental<=5) unlockAch('survivor');
+    if(c.boss){ unlockAch('boss'); if(!K.bossUsed) unlockAch('noboss'); } if(c.id==='daiou') unlockAch('daiou');
+  } else if(res==='fire'){
+    const viral=c.trait.includes('viral'); sc=viral?-120:-60; mentalD=-12; title=viral?'大炎上！！（拡散）':'炎上…'; line=c.fire;
+    S.streak=0; S.combo=0; SFX.fire(); vib([200,80,200]); flames.visible=true; setMotionNow(clRig,'angry'); clRig.expr='angry'; act(opRig,'op_stress',3,'cry'); shake=0.6;
+    unlockAch('fire');
+  } else {
+    sc=20; coin=5; mentalD=-5; title='時間切れ'; line='「もういい！また掛け直す！」ガチャッ'; S.streak=0; SFX.bad();
+    setMotionNow(clRig,'point'); clRig.expr='grumpy'; act(opRig,'sad',2,'worried');
+  }
+  S.score=Math.max(0,S.score+sc); S.coins+=coin; S.mental=Math.max(0,Math.min(S.maxMental,S.mental+mentalD));
+  if(S.coins>=100) unlockAch('rich');
+  S.dayLog.push({c,res,sc});
+  setTimeout(()=>popText(title,res==='win'?'win':res==='fire'?'fire':''),K.lastFx?900:0);
+  logPush('sys',K.result,K.lastLineKind); logPush('cl',line.replace(/^「|」$/g,'')); logPush('sys',`${res==='win'?'🎉':res==='fire'?'🔥':'⌛'} ${title}`,res==='win'?'great':'bad');
+  setBubble('cl',line.replace(/^「|」$/g,''),3); speak(line,clVoice());
+  renderCall(true); renderHUD();
+  setTimeout(()=>{
+    UI.innerHTML=`<div class="card center"><div class="big ${res==='win'?'green':res==='fire'?'red':''}">${res==='win'?'🎉':res==='fire'?'🔥':'⌛'} ${title}</div>
+     <div class="bubble">${c.em} 「${line.replace(/^「|」$/g,'')}」</div>
+     <table class="tbl"><tr><td>スコア</td><td>${sc>=0?'+':''}${sc}</td></tr><tr><td>コイン</td><td>+${coin}</td></tr><tr><td>メンタル</td><td>${mentalD>=0?'+':''}${mentalD}</td></tr>${res==='win'?`<tr><td>最大コンボ</td><td>${K.maxCombo}</td></tr><tr><td>残り忍耐</td><td>${K.pat}</td></tr>`:''}</table>
+     <button class="btn" id="go">${S.mental<=0?'…':'次へ'}</button></div>`;
+    $('#go').onclick=()=>{ SFX.click(); if(S.mental<=0) return gameOver(); S.callIdx++; if(S.callIdx>=CALLS_PER_DAY) dayEnd(); else beforeCall(); };
+  },K.lastFx?2600:1900);
+}
+function dayEnd(){
+  mode='shop'; setClaimer(null); setOp('op_win','happy');
+  const wins=S.dayLog.filter(x=>x.res==='win').length;
+  if(wins===S.dayLog.length) unlockAch('perfectday'); if(S.dayForce===0) unlockAch('pacifist'); hideBubbles(); clearFx();
+  if(S.day>=LAST_DAY){ unlockAch('legend'); return ending(); }
+  renderShop(wins);
+}
+function renderShop(wins){
+  const rows=S.dayLog.map(x=>`<tr><td>${x.c.em} ${x.c.name}</td><td>${x.res==='win'?'✅撃退':x.res==='fire'?'🔥炎上':x.res==='arrest'?'🚓逮捕':'⌛時間切れ'}</td><td>${x.sc>=0?'+':''}${x.sc}</td></tr>`).join('');
+  UI.innerHTML=`<div class="card"><div class="big center">📋 DAY ${S.day} 日報</div>
+   <table class="tbl">${rows}</table>
+   <p class="center">撃退 ${wins}/${S.dayLog.length}・合計スコア <b>${S.score}</b><br>現在の称号：<b>${rankOf(S.score)}</b></p></div>
+   <div class="card"><div class="big center">🛒 社内ショップ <small>💰${S.coins}</small></div>
+   <div class="shop">${SHOP.map(it=>{ const own=!it.cons&&S.items[it.id]; const cnt=it.cons?S.cons[it.id]||0:0;
+     return `<button class="item ${own?'own':''}" data-id="${it.id}" ${own||S.coins<it.p?'disabled':''}><span class="ii">${it.i}</span><b>${it.n}</b><small>${it.d}</small><span class="pr">${own?'購入済':`💰${it.p}`}${it.cons?`（所持${cnt}）`:''}</span></button>`; }).join('')}</div>
+   <button class="btn" id="next">DAY ${S.day+1} へ</button></div>`;
+  UI.querySelectorAll('.item').forEach(b=>b.onclick=()=>{ const it=SHOP.find(x=>x.id===b.dataset.id); if(S.coins<it.p) return;
+    S.coins-=it.p; S.bought++; if(it.cons) S.cons[it.id]=(S.cons[it.id]||0)+1; else { S.items[it.id]=true; if(RESPONSES.some(r=>r.id===it.id&&r.unlock)) S.unlocked.add(it.id); }
+    if(S.bought>=5) unlockAch('shop5'); SFX.coin(); refreshItems(); renderShop(wins); renderHUD(); });
+  $('#next').onclick=()=>{ SFX.click(); S.day++; dayStart(); };
+  renderHUD();
+}
+function useItem(id){
+  if(!(S.cons[id]>0)) return; S.cons[id]--; SFX.coin();
+  if(id==='ticket') S.mental=Math.min(S.maxMental,S.mental+30);
+  if(id==='energy'){ S.mental=Math.min(S.maxMental,S.mental+15); S.combo++; K.combo++; }
+  if(id==='jidan') S.compla=Math.max(0,S.compla-40);
+  toast(id==='ticket'?'🍱 社食でメンタル +30':id==='jidan'?'💼 示談成立。コンプラ違反度 -40':'🥫 エナドリでメンタル +15・コンボ +1'); renderCall(); renderHUD();
+}
+function finishRun(){ if(S.score>SAVE.best){ SAVE.best=S.score; } persist(); }
+function gameOver(){
+  mode='over'; finishRun(); setOp('op_stress','cry'); if(clRig){ setMotionNow(clRig,'laugh'); clRig.expr='happy'; }
+  UI.innerHTML=`<div class="card center"><div class="big red">😵 メンタル崩壊…</div><p>あなたは有給休暇に入りました。<br>DAY ${S.day}・通話 ${S.callIdx+1} 件目で力尽きた</p>
+   <div class="score">${S.score}<small> pt</small></div><p>称号：<b>${rankOf(S.score)}</b><br>ベスト：${SAVE.best}</p>
+   <button class="btn" id="re">もう一度出勤する</button><button class="btn sub" id="tt">タイトルへ</button></div>`;
+  $('#re').onclick=()=>{ SFX.click(); newGame(); }; $('#tt').onclick=()=>{ SFX.click(); title(); };
+}
+function ending(){
+  mode='ending'; finishRun(); setOp('op_win','happy');
+  UI.innerHTML=`<div class="card center"><div class="big green">🏆 7日間 勤め上げた！</div><p>クレーマー大王まで渡り合い、あなたは伝説となった…かもしれない。</p>
+   <div class="score">${S.score}<small> pt</small></div><p>最終称号：<b>${rankOf(S.score)}</b><br>総撃退数：${S.totalWins}・最大コンボ：${S.maxCombo}<br>ベスト：${SAVE.best}</p>
+   <button class="btn" id="re">2周目に出勤</button><button class="btn sub" id="tt">タイトルへ</button></div>`;
+  $('#re').onclick=()=>{ SFX.click(); newGame(); }; $('#tt').onclick=()=>{ SFX.click(); title(); };
+}
+
+/* ---------- 画面描画 ---------- */
+function bar(v,max,col){ return `<div class="bar"><i style="width:${Math.max(0,Math.min(100,v/max*100))}%;background:${col}"></i></div>`; }
+function renderHUD(){
+  if(mode==='title'||mode==='viewer'||mode==='ideas'||!S){ HUD.innerHTML=''; return; }
+  let h=`<div class="top"><span>DAY ${S.day}</span><span>⭐${S.score}</span><span>💰${S.coins}</span>${S.combo>1?`<span class="cb">🔥${S.combo}</span>`:''}
+    <span class="mt">❤️${Math.max(0,Math.round(S.mental))}${bar(S.mental,S.maxMental,S.mental<30?'#e04848':'#3ab06a')}</span>
+    <span class="mt">⚖️${Math.round(S.compla)}${bar(S.compla,100,S.compla>70?'#e04848':'#8a6ad0')}</span>
+    <span class="mt">🚓${Math.round(S.police)}${bar(S.police,100,S.police>60?'#e04848':'#3a5ad0')}</span></div>`;
+  if(K&&(mode==='call'||mode==='end')){
+    const w=weakNow();
+    const slots=w.map(t=>K.revealed.has(t)?`<span class="tg" style="background:${TAGS[t].c}">${TAGS[t].i}${TAGS[t].n}</span>`:'<span class="tg q">❓</span>').join('');
+    const rs=[...K.resKnown].map(t=>`<span class="tg rs">✖${TAGS[t].n}</span>`).join('');
+    h+=`<div class="hr"><div class="cn">${K.c.em} ${K.c.name}${K.c.boss?' <b class="red">BOSS</b>':''}</div>
+      <div class="ang">😡 怒り ${Math.round(K.anger)}${bar(K.anger,100,K.anger>70?'#e04848':K.anger>40?'#e6a23a':'#5ab0e0')}</div>
+      <div>⏳ 忍耐 ${'●'.repeat(Math.max(0,K.pat))}${'○'.repeat(Math.max(0,K.patMax-K.pat))}</div>
+      <div class="wk">弱点 ${slots} ${rs}</div></div>`;
+  }
+  HUD.innerHTML=h;
+}
+function renderCall(ended){
+  const w=weakNow();
+  const btns=ended?'':K.hand.map((r,i)=>{ const good=r.tags.some(t=>K.revealed.has(t)&&w.includes(t)); const bad=!good&&r.tags.some(t=>K.resKnown.has(t));
+    const dis=r.coin&&S.coins<r.coin; const v=r.tags.includes('force')&&r.tags.length<TAGKEYS.length, tx=r.tags.includes('toxic')&&r.tags.length<TAGKEYS.length;
+    return `<button class="ch ${good?'good':''} ${bad?'bad':''} ${v?'force':''} ${tx?'toxic':''}" data-i="${i}" ${dis?'disabled':''}><span class="mk">${good?'◎':bad?'✖':''}</span><b>${r.label}</b><small>${r.tags.length===TAGKEYS.length?'🌈 全タグ':r.tags.map(t=>TAGS[t].i+TAGS[t].n).join(' ')||'🧘 自分を回復'}${r.cost?` ・💔${r.cost}`:''}${r.compla?` ・⚖️+${r.compla}`:''}${(r.police||r.compla)?` ・🚓+${Math.round(r.police||r.compla*0.5)}`:''}</small></button>`; }).join('');
+  const cons=Object.entries(S.cons).filter(([k,v])=>v>0);
+  UI.innerHTML=`<div class="logwrap"><div class="loghead"><span>💬 通話ログ</span><button class="mini" id="vtg">${voiceOn?'🔊 音声ON':'🔇 音声OFF'}</button></div><div class="log" id="log">${logHTML()}</div></div>
+    ${ended?'':`<div class="chhead">▼ あなたの返答を選ぶ（${K.hand.length}択）${cons.map(([k,v])=>`<button class="mini" data-use="${k}">${SHOP.find(x=>x.id===k).i}×${v}</button>`).join('')}</div>
+    <div class="grid">${btns}</div>`}`;
+  const lg=$('#log'); if(lg) lg.scrollTop=lg.scrollHeight;
+  UI.querySelectorAll('.ch').forEach(b=>b.onclick=()=>choose(+b.dataset.i));
+  UI.querySelectorAll('[data-use]').forEach(b=>b.onclick=()=>useItem(b.dataset.use));
+  const vt=$('#vtg'); if(vt) vt.onclick=()=>{ const on=toggleVoice(); vt.textContent=on?'🔊 音声ON':'🔇 音声OFF'; };
+  UI.scrollTop=0;
+}
+
+/* ---------- アニメ管理 ---------- */
+function setMotionNow(rig,m){ if(!rig) return; rig.base=m; rig.tempUntil=0; setMotion(rig,m,T); }
+function act(rig,m,dur,expr){ if(!rig) return; rig.temp=m; rig.tempUntil=T+dur; rig.tempExpr=expr||null; }
+function setOp(m,expr){ if(!opRig) return; opRig.base=m; opRig.baseExpr=expr||'normal'; opRig.tempUntil=0; }
+function moodClaimer(){
+  if(!clRig||!K) return;
+  if(K.state==='talk'){ clRig.base=K.anger>70?'phone_angry':'phone'; clRig.baseExpr=K.anger>70?'angry':K.anger>35?'grumpy':'calm'; }
+}
+function tick(rig){
+  if(!rig) return;
+  let m=rig.base, ex=rig.baseExpr||rig.expr;
+  if(rig.tempUntil>T){ m=rig.temp; if(rig.tempExpr) ex=rig.tempExpr; }
+  if(rig===clRig&&K&&K.state!=='talk') ex=clRig.expr;
+  if(rig===opRig&&mode==='call'&&!(rig.tempUntil>T)&&S&&S.mental<30) ex='worried';
+  rig.expr=ex||'normal'; setMotion(rig,m,T); animateHuman(rig,m,T);
+}
+
+/* ---------- タイトル ---------- */
+function title(){
+  mode='title'; clearInterval(ringTimer); showGame(true); hideBubbles(); clearFx(); stopSpeech(); S=null; K=null; refreshItems(); flames.visible=false;
+  setOperator(SAVE.op||0); setOp('op_talk','happy');
+  const demo=pick(NORMAL_CLAIMERS); setClaimer(demo); clG.visible=true; clG.scale.setScalar(1); clG.position.set(1,0,0); clRig.base='phone_angry'; clRig.baseExpr='angry';
+  UI.innerHTML=`<div class="card center title"><div class="logo">📞 クレーム撃退<br>コールセンター</div>
+   <p class="note">毎ターン12択以上の返答で、37人のクレーマーを撃退せよ！<br>弱点を見抜けば効果は抜群。間違えると…炎上！</p>
+   <div class="opsel"><button class="arrow" id="pv">◀</button><div><small>オペレーター</small><br><b id="opn">${OPERATORS[SAVE.op||0][0]}</b></div><button class="arrow" id="nx">▶</button></div>
+   <button class="btn big2" id="start">🎧 出勤する</button>
+   <div class="row3"><button class="btn sub" id="mdl">🧍 3Dモデル工房</button><button class="btn sub" id="idea">💡 アイデア帳</button></div>
+   <div class="row3"><button class="btn sub" id="dex">📖 図鑑 ${SAVE.dex.length}/${CLAIMERS.length}</button><button class="btn sub" id="ach">🏆 実績 ${SAVE.ach.length}/${ACHIEVEMENTS.length}</button></div>
+   <button class="btn sub" id="how">❔ 遊び方</button><div class="row3"><button class="btn sub" id="snd">${muted?'🔇 効果音OFF':'🔔 効果音ON'}</button><button class="btn sub" id="voice">${voiceOn?'🗣️ 音声ON':'🤐 音声OFF'}</button></div>${hasTTS?'':'<p class="note">※この端末は読み上げ音声に非対応です</p>'}
+   <p class="note">ベストスコア：${SAVE.best}（${rankOf(SAVE.best)}）</p></div>`;
+  const cyc=d=>{ SAVE.op=(SAVE.op+d+OPERATORS.length)%OPERATORS.length; persist(); setOperator(SAVE.op); setOp('op_win','happy'); $('#opn').textContent=OPERATORS[SAVE.op][0]; SFX.click(); };
+  $('#pv').onclick=()=>cyc(-1); $('#nx').onclick=()=>cyc(1);
+  $('#start').onclick=()=>{ au(); SFX.click(); newGame(); };
+  $('#mdl').onclick=()=>{ au(); SFX.click(); openViewer(); };
+  $('#idea').onclick=()=>{ SFX.click(); openIdeas(); };
+  $('#dex').onclick=()=>{ SFX.click(); openDex(); };
+  $('#ach').onclick=()=>{ SFX.click(); openAch(); };
+  $('#how').onclick=()=>{ SFX.click(); openHow(); };
+  $('#snd').onclick=()=>{ muted=!muted; $('#snd').textContent=muted?'🔇 効果音OFF':'🔔 効果音ON'; };
+  $('#voice').onclick=()=>{ au(); const on=toggleVoice(); $('#voice').textContent=on?'🗣️ 音声ON':'🤐 音声OFF'; };
+  renderHUD(); fitCamera();
+}
+function backBtn(){ return `<button class="btn sub" id="back">◀ タイトルへ</button>`; }
+function bindBack(){ $('#back').onclick=()=>{ SFX.click(); title(); }; }
+function openHow(){
+  mode='ideas';
+  UI.innerHTML=`<div class="card"><div class="big center">❔ 遊び方</div><ol class="how">
+   <li>電話が鳴ったら応答。クレーマーの<b>怒りゲージを0</b>にすれば撃退！</li>
+   <li>毎ターン<b>12個以上の返答</b>から1つ選ぶ。返答には「謝罪・共感・論理…」など<b>12種類のタグ</b>がある。</li>
+   <li>クレーマーごとに<b>弱点タグ</b>（効果2倍）と<b>耐性タグ</b>（逆効果）がある。最初は❓。セリフや職業から推理しよう。</li>
+   <li>弱点を当て続けると<b>コンボ</b>で威力アップ。判明した弱点を含む返答には◎が付く。</li>
+   <li>怒りが<b>100で炎上</b>、忍耐ターンが尽きると<b>時間切れ</b>。</li>
+   <li>毎ターン怒りに応じて<b>メンタル</b>が削られる。0になるとゲームオーバー。深呼吸や保留で回復も。</li>
+   <li><b>💥実力行使</b>（タライ・電撃・落とし穴・ロケット…）は威力が高いが<b>⚖️コンプラ違反度</b>が上がる。100で人事部に呼び出し！ お年寄りや子連れには逆効果。</li>
+   <li><b>🗯️悪口</b>や実力行使を使うと<b>🚓通報度</b>が上がり、たまに<b>警察に逮捕</b>される。取り調べ（12択×4ラウンド）で疑いを晴らせないと<b>実刑でゲームオーバー</b>！</li>
+   <li>1日4件、最後はボス。日報の後にショップで道具を買える。<b>7日間</b>勤め上げればクリア！</li></ol>${backBtn()}</div>`;
+  bindBack();
+}
+function openDex(){
+  mode='ideas';
+  UI.innerHTML=`<div class="card"><div class="big center">📖 クレーマー図鑑 ${SAVE.dex.length}/${CLAIMERS.length}</div><div class="dex">${CLAIMERS.map(c=>{ const met=SAVE.dex.includes(c.id), won=SAVE.dexWin.includes(c.id);
+    const wk=c.boss?[...new Set(c.weak.flat())]:c.weak;
+    return `<div class="dx ${met?'':'unk'}"><div class="de">${met?c.em:'❔'}</div><b>${met?c.name:'？？？'}</b>${c.boss?'<small class="red">BOSS</small>':''}<small>${won?`弱点：${wk.map(t=>TAGS[t].i).join('')}／耐性：${c.res.map(t=>TAGS[t].i).join('')||'なし'}`:met?`📍${c.loc}（撃退で弱点登録）`:'未遭遇'}</small></div>`; }).join('')}</div>${backBtn()}</div>`;
+  bindBack();
+}
+function openAch(){
+  mode='ideas';
+  UI.innerHTML=`<div class="card"><div class="big center">🏆 実績 ${SAVE.ach.length}/${ACHIEVEMENTS.length}</div>${ACHIEVEMENTS.map(a=>`<div class="ac ${SAVE.ach.includes(a[0])?'':'unk'}">${SAVE.ach.includes(a[0])?'🏆':'🔒'} <b>${a[1]}</b><br><small>${a[2]}</small></div>`).join('')}
+   <div class="big center" style="margin-top:12px">🎖️ 称号一覧</div>${RANKS.map(r=>`<div class="ac">${r[0]}pt〜 <b>${r[1]}</b></div>`).join('')}${backBtn()}</div>`;
+  bindBack();
+}
+function openIdeas(){
+  mode='ideas';
+  const partCount=Object.values(PARTS).reduce((a,b)=>a+b.length,0);
+  const secs=[
+    ['クレーマー（ボス含む）',CLAIMERS.map(c=>`${c.em} ${c.name}${c.boss?'【BOSS】':''}：${c.lines[0]}`)],
+    ['返答の選択肢',RESPONSES.map(r=>`${r.label}（${r.tags.length===TAGKEYS.length?'全タグ':r.tags.map(t=>TAGS[t].n).join('・')||'回復'}）`)],
+    ['返答タグ',TAGKEYS.map(t=>`${TAGS[t].i} ${TAGS[t].n}`)],
+    ['ショップの道具',SHOP.map(s=>`${s.i} ${s.n}：${s.d}`)],
+    ['通話の合間イベント',EVENTS.map(e=>`${e.i} ${e.n}：${e.d}`)],
+    ['通話中の突発イベント',CALL_EVENTS.map(e=>`${e.n}：${e.d}`)],
+    ['実績',ACHIEVEMENTS.map(a=>`${a[1]}：${a[2]}`)],
+    ['ランク称号',RANKS.map(r=>r[1])],
+    ['オペレーター',OPERATORS.map(o=>o[0])],
+    ['3Dモーション',HUMAN_MOTIONS.map(m=>m[1])],
+    ['表情',EXPR_NAMES.map(e=>e[1])],
+    ['ゲームシステム',SYSTEM_IDEAS],
+  ];
+  const total=secs.reduce((a,s)=>a+s[1].length,0);
+  UI.innerHTML=`<div class="card"><div class="big center">💡 アイデア帳</div><p class="center">ゲームに盛り込んだアイデア <b class="red">${total}個</b><br><small>＋キャラクリ用3Dパーツ ${partCount}種</small></p>
+   ${secs.map(([n,l])=>`<details><summary>${n}（${l.length}）</summary><ol>${l.map(x=>`<li>${x}</li>`).join('')}</ol></details>`).join('')}
+   <details><summary>キャラクリ用3Dパーツ（${partCount}）</summary>${Object.entries(PARTS).map(([k,l])=>`<p><b>${{hair:'髪型',eyes:'目',brows:'眉',mouth:'口',hat:'帽子',top:'トップス',bottom:'ボトムス',shoes:'靴',acc:'アクセサリー',prop:'手持ち小物'}[k]}</b>：${l.map(x=>x[1]).join('・')}</p>`).join('')}</details>
+   ${backBtn()}</div>`;
+  bindBack();
+}
+
+/* ---------- 3Dモデル工房 ---------- */
+let vSel={kind:'cl',i:0,m:'phone_angry'};
+const viewFloor=new THREE.Mesh(new THREE.CircleGeometry(3,48),mat('#f0e6d6',{roughness:1})); viewFloor.rotation.x=-Math.PI/2; viewFloor.receiveShadow=true; viewerG.add(viewFloor);
+function showGame(on){ if(typeof intG!=='undefined'){ intG.visible=false; jailG.visible=false; } gameG.visible=on; viewerG.visible=!on; controls.enabled=!on; angerMark.visible=false; scene.background.set(on?'#dfe8f2':'#f6ecdf'); }
+function viewBuild(H){ if(viewRig){ viewerG.remove(viewRig.root); disposeRig(viewRig); } viewRig=buildHuman(H); viewRig.viewer=true; viewerG.add(viewRig.root); viewRig.base=vSel.m; viewRig.baseExpr=viewRig.expr; }
+function randomH(){ const P=k=>pick(PARTS[k])[0]; const col=()=>'#'+new THREE.Color().setHSL(Math.random(),0.45+Math.random()*0.3,0.35+Math.random()*0.35).getHexString();
+  const acc=shuffle(PARTS.acc.map(a=>a[0]).filter(a=>!['cape','baby','horns','antenna'].includes(a))).slice(0,Math.floor(Math.random()*3));
+  return {hair:P('hair'),hairC:pick(['#2a1c15','#4a3426','#8a5a30','#e8c070','#d9d9d9','#e0533f','#4a90e2','#ff8ac6','#3a2a5a']),eyes:P('eyes'),eyeC:col(),brows:P('brows'),mouth:P('mouth'),hat:Math.random()<0.4?P('hat'):'none',hatC:col(),
+    top:P('top'),topC:col(),accC:col(),bottom:P('bottom'),botC:col(),shoes:P('shoes'),shoeC:col(),acc,prop:Math.random()<0.6?P('prop'):'none',heads:rnd(2.6,4.2),build:rnd(0.9,1.4),height:rnd(0.85,1.15),skin:pick(['#ffe0c9','#f3c9a5','#d9a27a','#a8714d','#ffe8d8'])}; }
+function openViewer(){
+  mode='viewer'; clearInterval(ringTimer); showGame(false); HUD.innerHTML=''; hideBubbles(); stopSpeech();
+  if(!viewRig) viewBuild(CLAIMERS[0].H);
+  controls.target.set(0,0.75,0); camera.position.set(0.9,1.1,3.0); controls.update();
+  renderViewer();
+}
+function renderViewer(){
+  const list=[...OPERATORS.map((o,i)=>({k:'op',i,n:'🎧'+o[0]})),...CLAIMERS.map((c,i)=>({k:'cl',i,n:c.em+c.name}))];
+  const cur=vSel.kind==='op'?OPERATORS[vSel.i][0]:vSel.kind==='cl'?CLAIMERS[vSel.i].name:'ランダム生成キャラ';
+  const c=vSel.kind==='cl'?CLAIMERS[vSel.i]:null;
+  UI.innerHTML=`<div class="card"><div class="big center">🧍 3Dモデル工房</div><p class="center"><b>${cur}</b>${c?`<br><small>📍${c.loc}　初期怒り${c.anger}・忍耐${c.pat}</small>`:''}</p>
+   <div class="lbl">キャラクター（${list.length}人）</div><div class="chips scroll">${list.map((x,j)=>`<button class="chip ${vSel.kind===x.k&&vSel.i===x.i?'on':''}" data-k="${x.k}" data-i="${x.i}">${x.n}</button>`).join('')}<button class="chip ${vSel.kind==='rnd'?'on':''}" data-k="rnd" data-i="0">🎲 ランダム生成</button></div>
+   <div class="lbl">モーション（${HUMAN_MOTIONS.length}種）</div><div class="chips">${HUMAN_MOTIONS.map(m=>`<button class="chip mot ${vSel.m===m[0]?'on':''}" data-m="${m[0]}">${m[1]}</button>`).join('')}</div>
+   <div class="lbl">表情（${EXPR_NAMES.length}種）</div><div class="chips">${EXPR_NAMES.map(e=>`<button class="chip ${viewRig&&viewRig.baseExpr===e[0]?'on':''}" data-e="${e[0]}">${e[1]}</button>`).join('')}</div>
+   <p class="note center">ドラッグで回転・ピンチで拡大</p>${backBtn()}</div>`;
+  UI.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{ SFX.click(); vSel.kind=b.dataset.k; vSel.i=+b.dataset.i;
+    const H=vSel.kind==='op'?OPERATORS[vSel.i][1]:vSel.kind==='cl'?CLAIMERS[vSel.i].H:randomH();
+    if(vSel.kind==='op'&&vSel.m==='phone_angry') vSel.m='op_talk';
+    viewBuild(H); viewRig.baseExpr=vSel.kind==='cl'?'angry':'normal'; renderViewer(); });
+  UI.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{ SFX.click(); vSel.m=b.dataset.m; viewRig.base=vSel.m; renderViewer(); });
+  UI.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>{ SFX.click(); viewRig.baseExpr=b.dataset.e; renderViewer(); });
+  bindBack();
+}
+
+/* =========================================================
+   追加：音声読み上げ・会話ログ・吹き出し・実力行使の演出
+   ========================================================= */
+let voiceOn=SAVE.voice!==false, jaVoice=null;
+const hasTTS=typeof window.speechSynthesis!=='undefined'&&typeof window.SpeechSynthesisUtterance!=='undefined';
+function pickVoice(){ if(!hasTTS) return; const vs=speechSynthesis.getVoices(); jaVoice=vs.find(v=>/ja(-|_)?JP/i.test(v.lang))||vs.find(v=>/^ja/i.test(v.lang))||null; }
+if(hasTTS){ pickVoice(); try{ speechSynthesis.onvoiceschanged=pickVoice; }catch(e){} }
+function cleanSpeech(t){ return t.replace(/\p{Extended_Pictographic}/gu,'').replace(/[♪「」#☆]/g,'').replace(/〜+/g,'ー').trim(); }
+function speak(text,v){ if(!voiceOn||!hasTTS||!text) return; try{ const u=new SpeechSynthesisUtterance(cleanSpeech(text)); u.lang='ja-JP'; if(jaVoice) u.voice=jaVoice; u.pitch=Math.max(0,Math.min(2,v[0])); u.rate=Math.max(0.5,Math.min(2,v[1])); speechSynthesis.speak(u); }catch(e){} }
+function stopSpeech(){ if(hasTTS){ try{ speechSynthesis.cancel(); }catch(e){} } }
+const clVoice=()=>VOICE[K.c.id]||[1,1];
+const opVoice=()=>OP_VOICE[SAVE.op||0]||[1.2,1.1];
+function toggleVoice(){ voiceOn=!voiceOn; SAVE.voice=voiceOn; persist(); if(!voiceOn) stopSpeech(); else speak('音声オンです',opVoice()); return voiceOn; }
+
+/* 会話ログ */
+function logPush(who,text,kind){ if(!K.log) K.log=[]; K.log.push({who,text,kind}); if(K.log.length>40) K.log.shift(); }
+function esc(s){ return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function logHTML(){ const opName=OPERATORS[SAVE.op||0][0];
+  return (K.log||[]).map(m=>{
+    if(m.who==='sys') return `<div class="sys ${m.kind||''}">${esc(m.text)}</div>`;
+    const cl=m.who==='cl';
+    return `<div class="msg ${cl?'cl':'op'}"><div class="av">${cl?K.c.em:'🎧'}</div><div class="mb"><div class="nm">${cl?esc(K.c.name):'あなた（'+esc(opName)+'）'}</div><div class="bb">${esc(m.text)}</div></div></div>`; }).join(''); }
+
+/* 3D画面上の吹き出し */
+const SB={cl:{el:$('#sbCl'),full:'',n:0,until:0},op:{el:$('#sbOp'),full:'',n:0,until:0}};
+function setBubble(who,text,dur=6){ const b=SB[who]; b.full=text; b.n=0; b.until=T+dur; b.el.style.display=text?'block':'none'; b.el.classList.remove('popin'); void b.el.offsetWidth; b.el.classList.add('popin'); }
+function hideBubbles(){ for(const k in SB){ SB[k].full=''; SB[k].el.style.display='none'; } }
+const _pv=new THREE.Vector3();
+function updateBubbles(dt){
+  const w=stage.clientWidth,h=stage.clientHeight;
+  const inInt=(mode==='interro'||mode==='jail');
+  for(const [who,rig] of inInt?[['cl',intDet],['op',intOp]]:[['cl',clRig],['op',opRig]]){
+    const b=SB[who]; if(!b.full||!rig||mode==='viewer'||(!inInt&&who==='cl'&&!clG.visible)||T>b.until){ b.el.style.display='none'; continue; }
+    b.el.style.display='block'; b.n=Math.min(b.full.length,b.n+dt*28);
+    const name=who==='cl'?(inInt?'🕵️ 鬼刑事 権田':K?K.c.em+' '+K.c.name:''):'🎧 あなた';
+    b.el.innerHTML=`<b>${esc(name)}</b>${esc(b.full.slice(0,Math.ceil(b.n)))}`;
+    rig.head.getWorldPosition(_pv); _pv.y+=rig.dims.R*1.4; _pv.project(camera);
+    const x=(_pv.x*0.5+0.5)*w, y=(-_pv.y*0.5+0.5)*h;
+    const bw=b.el.offsetWidth, bh=b.el.offsetHeight;
+    const left=Math.max(4,Math.min(w-bw-4,who==='cl'?x-bw*0.7:x-bw*0.3)), top=Math.max(34,Math.min(h-bh-60,y-bh-8));
+    b.el.style.transform=`translate(${left}px,${top}px)`;
+    b.el.style.setProperty('--tx',Math.max(12,Math.min(bw-12,x-left))+'px');
+  }
+}
+
+/* ノイズ系の効果音 */
+function noise(d=0.4,v=0.15,lp=1200,delay=0){ const a=au(); if(!a||muted) return; const n=Math.floor(a.sampleRate*d), buf=a.createBuffer(1,n,a.sampleRate), ch=buf.getChannelData(0);
+  for(let i=0;i<n;i++) ch[i]=(Math.random()*2-1)*Math.pow(1-i/n,2);
+  const s=a.createBufferSource(); s.buffer=buf; const f=a.createBiquadFilter(); f.type='lowpass'; f.frequency.value=lp; const g=a.createGain(); g.gain.value=v;
+  s.connect(f).connect(g).connect(a.destination); s.start(a.currentTime+delay); }
+Object.assign(SFX,{
+  clang:()=>{ [1200,1810,2600].forEach(f=>beep(f,0.7,'triangle',0.05)); noise(0.1,0.2,4000); },
+  slap:()=>{ noise(0.12,0.4,6000); beep(300,0.08,'square',0.05); },
+  zap:()=>{ for(let i=0;i<8;i++) beep(80+Math.random()*900,0.06,'sawtooth',0.04,i*0.06); },
+  whistle:()=>{ beep(3100,0.8,'sine',0.06,0,3300); },
+  boom:()=>{ noise(1.0,0.5,600); beep(70,0.8,'sine',0.2,0,30); },
+  swoosh:()=>{ noise(0.5,0.25,2500); },
+  splat:()=>{ noise(0.18,0.3,900); beep(140,0.15,'sine',0.08,0,60); },
+  drop:()=>{ beep(900,0.6,'sine',0.06,0,90); },
+  rumble:()=>{ beep(45,1.2,'sawtooth',0.06,0,40); },
+});
+
+/* 実力行使の3D演出 */
+const fxG=new THREE.Group(); gameG.add(fxG);
+const anims=[];
+function anim(dur,upd,done){ anims.push({t0:T,dur,upd,done}); }
+function clHead(){ return headPos(clRig); }
+function flash(color,inten=4,dur=0.5){ const l=new THREE.PointLight(color,inten,5); l.position.copy(clHead()).add(new THREE.Vector3(0,0.3,0.6)); fxG.add(l); anim(dur,(p)=>{ l.intensity=inten*(1-p)*(0.6+Math.random()*0.8); },()=>fxG.remove(l)); }
+function bigText(txt){ popText(txt,'fx'); }
+function doFx(type,finish){
+  if(!clRig) return; const hp=clHead(), R=clRig.dims.R;
+  switch(type){
+    case 'harisen': { const g=new THREE.Group(); const f=new THREE.Mesh(new THREE.CircleGeometry(0.55,20,Math.PI*0.3,Math.PI*0.4),mat('#f8f4e8',{side:THREE.DoubleSide})); f.position.y=0.45; g.add(f); g.add(at(cyl(0.025,0.025,0.4,mat('#c8102e'),8),0,0.2,0));
+      g.position.set(hp.x-0.35,hp.y+0.1,hp.z+0.25); fxG.add(g); SFX.swoosh();
+      anim(0.5,p=>{ g.rotation.z=1.6-p*2.6; if(p>0.55&&!g.userData.hit){ g.userData.hit=1; SFX.slap(); shake=0.35; bigText('スパーン！'); burst(hp,['💥','⭐'],6); } },()=>fxG.remove(g));
+      act(clRig,'dizzy',1.3,'dizzy'); break; }
+    case 'tarai': { const t=cyl(0.26,0.2,0.1,mat('#c0c4c8',{metalness:0.8,roughness:0.25}),24); t.position.set(hp.x,hp.y+1.6,hp.z); fxG.add(t); SFX.drop();
+      anim(1.4,p=>{ const q=Math.min(1,p/0.35); if(p<0.35) t.position.y=hp.y+1.6-1.6*q*q+R*0.9*q; else { if(!t.userData.hit){ t.userData.hit=1; SFX.clang(); shake=0.3; bigText('ガーン！'); burst(hp,['⭐','💫'],6); act(clRig,'dizzy',1.6,'dizzy'); }
+        const r=(p-0.35)/0.65; t.position.set(hp.x+r*0.6,hp.y+R*0.9+Math.sin(r*Math.PI)*0.5-r*r*0.8,hp.z+r*0.3); t.rotation.z=r*6; } },()=>fxG.remove(t)); break; }
+    case 'denki': { SFX.zap(); flash('#ffe14a',6,1.0); vib([40,30,40,30,40]); bigText('ビリビリビリ！！');
+      const bolts=[]; for(let i=0;i<5;i++){ const s=emojiSprite('⚡',0.25); s.position.copy(hp).add(new THREE.Vector3((Math.random()-0.5)*0.6,(Math.random()-0.3)*0.6,0.2)); fxG.add(s); bolts.push(s); }
+      anim(1.0,p=>{ bolts.forEach(b=>b.visible=Math.random()<0.6); clG.position.x=K.baseX+(Math.random()-0.5)*0.05; },()=>{ bolts.forEach(b=>fxG.remove(b)); clG.position.x=K.baseX; });
+      act(clRig,'surprise',1.2,'shock'); break; }
+    case 'whistle': { SFX.whistle(); bigText('ピィィィーーッ！'); const s=emojiSprite('📢',0.3); s.position.set(-0.3,1.4,0.5); fxG.add(s); anim(0.9,p=>s.scale.setScalar(0.3+Math.sin(p*30)*0.04),()=>fxG.remove(s)); act(clRig,'surprise',1.0,'shock'); break; }
+    case 'otoshiana': { const hole=new THREE.Mesh(new THREE.CircleGeometry(0.42,32),new THREE.MeshBasicMaterial({color:'#111'})); hole.rotation.x=-Math.PI/2; hole.position.set(clG.position.x,0.005,0); fxG.add(hole); SFX.drop(); bigText('ポチッ'); act(clRig,'surprise',1.5,'shock');
+      if(finish){ hole.userData.keep=1; K.hole=hole; } else anim(1.6,p=>{ clG.position.y=p<0.3?-1.2*((p/0.3)**2):p<0.7?-1.2:-1.2*(1-(p-0.7)/0.3); if(p>0.7&&!hole.userData.c){ hole.userData.c=1; } },()=>{ clG.position.y=0; fxG.remove(hole); }); break; }
+    case 'fan': { const g=new THREE.Group(); g.position.set(2.2,0,0.3); g.rotation.y=-Math.PI/2; fxG.add(g);
+      g.add(at(cyl(0.05,0.05,0.9,mat('#888'),8),0,0.45,0)); const blades=new THREE.Group(); blades.position.y=0.95; g.add(blades);
+      for(let i=0;i<4;i++){ const b=cube(0.08,0.45,0.02,'#8fd4ff'); b.position.y=0.22; const p=new THREE.Group(); p.rotation.z=i*Math.PI/2; p.add(b); blades.add(p); }
+      blades.add(new THREE.Mesh(new THREE.TorusGeometry(0.5,0.02,6,24),mat('#ccc'))); SFX.swoosh(); bigText('ゴオオオオ！');
+      anim(1.8,p=>{ blades.rotation.z+=0.8; if(!finish) clG.rotation.z=Math.sin(p*Math.PI)*0.35; },()=>{ if(!finish){ fxG.remove(g); clG.rotation.z=0; } else K.fanObj=g; });
+      act(clRig,'surprise',1.6,'shock'); break; }
+    case 'pie': { const s=emojiSprite('🥧',0.3); s.position.set(-0.6,1.2,0.6); fxG.add(s); SFX.swoosh();
+      anim(0.45,p=>{ s.position.lerpVectors(new THREE.Vector3(-0.6,1.2,0.6),hp.clone().add(new THREE.Vector3(0,0,R)),p); s.material.rotation=p*8; },()=>{ fxG.remove(s); SFX.splat(); bigText('ベチャッ！');
+        if(clRig&&!clRig.cream){ clRig.cream=1; for(let i=0;i<7;i++){ const c=sph(R*(0.22+Math.random()*0.12),mat('#fffaf0',{roughness:0.4}),10,8); c.position.copy(sp(R*1.02,Math.PI/2+(Math.random()-0.5)*1.4,Math.PI*(0.45+Math.random()*0.35))); c.scale.z=0.5; c.lookAt(c.position.clone().multiplyScalar(2)); clRig.head.add(c);} } act(clRig,'cry',1.4,'cry'); }); break; }
+    case 'salt': { for(let i=0;i<16;i++){ const s=emojiSprite(i%3?'✨':'🧂',0.1); const st=new THREE.Vector3(-0.5,1.1,0.5); s.position.copy(st); fxG.add(s); const tg=hp.clone().add(new THREE.Vector3((Math.random()-0.5)*0.5,(Math.random()-0.5)*0.5,0.2)); const dl=i*0.03;
+        anim(0.6+dl,p=>{ const q=Math.max(0,(p*(0.6+dl)-dl)/0.6); s.position.lerpVectors(st,tg,q); s.position.y+=Math.sin(q*Math.PI)*0.3; },()=>fxG.remove(s)); }
+      noise(0.6,0.12,7000); bigText('悪霊退散！'); act(clRig,'surprise',1.0,'shock'); break; }
+    case 'stare': { SFX.rumble(); bigText('ゴゴゴゴゴ…'); act(opRig,'op_win',1.5,'angry'); act(clRig,'sad',1.8,'worried'); const s=emojiSprite('👁️',0.4); s.position.set(-0.95,1.9,0.3); fxG.add(s); anim(1.6,p=>{ s.material.opacity=Math.sin(p*Math.PI); },()=>fxG.remove(s)); break; }
+    case 'wrestle': { SFX.swoosh(); bigText('ジャーマン！！'); anim(1.0,p=>{ clG.rotation.x=-Math.sin(Math.min(1,p*1.6)*Math.PI)*1.4; clG.position.y=Math.sin(Math.min(1,p*1.6)*Math.PI)*0.5; if(p>0.62&&!clG.userData.hit){ clG.userData.hit=1; SFX.boom(); shake=0.5; burst(new THREE.Vector3(clG.position.x,0.2,0.2),['💥','⭐'],8); } },()=>{ clG.rotation.x=0; clG.position.y=0; clG.userData.hit=0; }); act(clRig,'dizzy',1.8,'dizzy'); break; }
+    case 'rocket': { const g=new THREE.Group(); g.add(at(cyl(0.09,0.09,0.5,mat('#f2f2f2'),14),0,0.25,0)); g.add(at(cone(0.09,0.2,mat('#e03030'),14),0,0.6,0));
+      for(let i=0;i<3;i++){ const f=cube(0.02,0.14,0.1,'#e03030'); f.position.set(Math.cos(i*2.1)*0.09,0.05,Math.sin(i*2.1)*0.09); f.rotation.y=-i*2.1; g.add(f); }
+      const fl=emojiSprite('🔥',0.25); fl.position.y=-0.1; g.add(fl); g.position.set(0,clRig.dims.legLen,-clRig.dims.tw*1.2); clG.add(g); K.rocketObj=g; SFX.rumble(); bigText('3…2…1…');
+      if(!finish) anim(1.4,p=>{ clG.position.y=Math.sin(p*Math.PI)*0.9; fl.scale.setScalar(0.2+Math.random()*0.15); },()=>{ clG.position.y=0; clG.remove(g); SFX.boom(); burst(new THREE.Vector3(clG.position.x,0.1,0.2),['💨','💥'],6); });
+      act(clRig,'cheer',1.5,'shock'); break; }
+    case 'bomb': { SFX.boom(); flash('#ff8a20',8,0.6); shake=0.8; vib([100,50,200]); bigText('ドカーーン！！');
+      for(let i=0;i<10;i++){ const s=emojiSprite(i%2?'💥':'💨',0.35+Math.random()*0.3); s.position.copy(hp).add(new THREE.Vector3((Math.random()-0.5)*0.6,(Math.random()-0.5)*0.6,0.3)); fxG.add(s); anim(0.8,p=>{ s.scale.setScalar((0.35+p*0.5)); s.material.opacity=1-p; },()=>fxG.remove(s)); }
+      if(clRig&&clRig.H.hair!=='afro'){ const H=Object.assign({},clRig.H,{hair:'afro',hairC:'#1a1a1a',hat:'none',skin:shade(clRig.H.skin,-0.35)}); const keep={expr:clRig.expr,base:clRig.base,baseExpr:clRig.baseExpr,cream:0};
+        clG.remove(clRig.root); disposeRig(clRig); clRig=buildHuman(H); Object.assign(clRig,keep); clG.add(clRig.root); unlockAch('afro'); }
+      act(clRig,'dizzy',1.8,'dizzy'); break; }
+    case 'security': { const s=emojiSprite('🦍',0.7); s.position.set(2.6,0.45,0.3); fxG.add(s); SFX.rumble(); bigText('ウホッ！！');
+      if(finish){ K.gorilla=s; } else anim(1.8,p=>{ s.position.x=p<0.4?2.6-(2.6-clG.position.x-0.35)*(p/0.4):p<0.6?clG.position.x+0.35:clG.position.x+0.35+(p-0.6)/0.4*2.4; s.position.y=0.45+Math.abs(Math.sin(p*20))*0.05; if(p>0.4&&p<0.45){ SFX.slap(); shake=0.3; } },()=>fxG.remove(s));
+      act(clRig,'surprise',1.6,'shock'); break; }
+    case 'boom': SFX.boom(); flash('#ffaa30',5,0.5); burst(hp,['🎆','💥'],6); act(clRig,'surprise',1,'shock'); break;
+  }
+}
+function updateAnims(){ for(let i=anims.length-1;i>=0;i--){ const a=anims[i]; const p=Math.min(1,(T-a.t0)/a.dur); a.upd(p); if(p>=1){ anims.splice(i,1); a.done&&a.done(); } } }
+function clearFx(){ anims.length=0; fxG.clear(); }
+/* 決め技ごとの退場演出 */
+function updateFinish(){
+  if(!K||K.state!=='win'||!K.blownAt||!clG.visible) return; const lt=T-K.blownAt; if(lt<0) return;
+  switch(K.finish){
+    case 'sink': clG.position.y=-(Math.max(0,lt-0.3)**2)*3; if(lt>1.6){ clG.visible=false; } break;
+    case 'up': clG.position.y=Math.max(0,lt-0.4)**2*2.5; clG.rotation.z=Math.sin(lt*20)*0.05; if(K.rocketObj) K.rocketObj.children.forEach(c=>{ if(c.isSprite) c.scale.setScalar(0.3+Math.random()*0.3); }); if(lt>0.4&&lt<0.45) SFX.boom(); if(lt>2.6) clG.visible=false; break;
+    case 'side': clG.position.x=K.baseX+Math.max(0,lt-0.5)**2*3; clG.rotation.z=-Math.min(1,lt)*0.4; if(K.gorilla){ const gx=lt<0.5?2.6-(2.6-(K.baseX+0.35))*(lt/0.5):clG.position.x+0.35; K.gorilla.position.set(gx,0.45+Math.abs(Math.sin(lt*20))*0.05,0.3); } if(lt>2.2) clG.visible=false; break;
+    default: clG.position.set(K.baseX+lt*1.6,Math.max(0,lt*3.2-lt*lt*1.2),-lt*0.6); if(lt>2.2) clG.visible=false;
+  }
+}
+
+/* =========================================================
+   警察：逮捕イベント・取り調べ・実刑
+   ========================================================= */
+const intG=new THREE.Group(); scene.add(intG); intG.visible=false;
+const jailG=new THREE.Group(); scene.add(jailG); jailG.visible=false;
+const extraRigs=[];
+const sirenR=new THREE.PointLight(0xff2020,0,6), sirenB=new THREE.PointLight(0x2050ff,0,6); sirenR.position.set(1.5,1.8,1); sirenB.position.set(-1.5,1.8,1); scene.add(sirenR,sirenB);
+let sirenOn=false, sirenTimer=null;
+function siren(on){ sirenOn=on; clearInterval(sirenTimer); if(on){ const s=()=>{ beep(960,0.45,'sawtooth',0.035,0,760); beep(760,0.45,'sawtooth',0.035,0.48,960); }; s(); sirenTimer=setInterval(s,980); } else { sirenR.intensity=sirenB.intensity=0; } }
+function addRig(H,parent,x,z,ry,base,expr){ const r=buildHuman(H); r.root.position.set(x,0,z); r.root.rotation.y=ry; r.base=base; r.baseExpr=expr||'normal'; parent.add(r.root); extraRigs.push(r); return r; }
+function clearExtra(){ for(const r of extraRigs){ r.root.parent&&r.root.parent.remove(r.root); disposeRig(r); } extraRigs.length=0; }
+function showScene(which){ gameG.visible=which==='game'; intG.visible=which==='int'; jailG.visible=which==='jail'; viewerG.visible=false; angerMark.visible=false; scene.background.set(which==='game'?'#dfe8f2':which==='int'?'#22262e':'#2a2a2a'); }
+
+/* 取調室 */
+let intOp=null, intDet=null, intLamp=null;
+function buildInt(){
+  intG.clear(); clearExtra();
+  const fl=new THREE.Mesh(new THREE.PlaneGeometry(6,4),mat('#4a4e56',{roughness:1})); fl.rotation.x=-Math.PI/2; fl.receiveShadow=true; intG.add(fl);
+  const wl=new THREE.Mesh(new THREE.PlaneGeometry(6,3),mat('#6a6e76',{roughness:1})); wl.position.set(0,1.5,-1); intG.add(wl);
+  const mir=new THREE.Mesh(new THREE.PlaneGeometry(1.4,0.7),mat('#1a1e26',{roughness:0.1,metalness:0.6})); mir.position.set(-0.4,1.45,-0.99); intG.add(mir);
+  const sign=new THREE.Mesh(new THREE.PlaneGeometry(0.7,0.18),new THREE.MeshBasicMaterial({map:texText('取調室',256,64,{bg:'#ddd',color:'#222',size:40})})); sign.position.set(1.1,1.9,-0.98); intG.add(sign);
+  const og=new THREE.Group(); og.position.set(-0.55,0,0); og.rotation.y=1.15; intG.add(og);
+  intOp=buildHuman(OPERATORS[SAVE.op||0][1]); og.add(intOp.root); intOp.base='op_stress'; intOp.baseExpr='worried'; extraRigs.push(intOp);
+  const D=intOp.dims, seatHip=D.legLen-D.thigh, top=seatHip+D.torsoLen*0.32-D.handR, zF=D.tw*1.25;
+  const tb=cube(0.75,0.04,0.9,'#7a6a5a'); tb.position.set(0,top-0.02,zF+0.45); og.add(tb);
+  for(const sx of [-1,1]) for(const sz of [0.1,0.8]){ const l=cube(0.04,top-0.04,0.04,'#3a3a3a'); l.position.set(sx*0.33,(top-0.04)/2,zF+sz); og.add(l); }
+  const seat=cube(D.tw*2.6,0.05,D.tw*2.4,'#555'); seat.position.set(0,seatHip-D.tw*0.45-0.025,-D.tw*0.1); og.add(seat);
+  const sl=cyl(0.03,0.03,seatHip-D.tw*0.45-0.05,mat('#333'),8); sl.position.set(0,(seatHip-D.tw*0.45)/2,-D.tw*0.1); og.add(sl);
+  const bowl=cyl(0.07,0.05,0.05,mat('#c0392b'),14); bowl.position.set(0.2,top+0.025,zF+0.55); bowl.visible=false; og.add(bowl); intG.userData.katsudon=bowl;
+  const lampG=new THREE.Group(); lampG.position.set(0.15,1.75,0.35); intG.add(lampG);
+  lampG.add(at(cyl(0.005,0.005,0.6,mat('#222'),4),0,0.3,0)); const sh=cone(0.16,0.14,mat('#2a2a2a',{side:THREE.DoubleSide}),16); lampG.add(sh);
+  lampG.add(at(sph(0.04,mat('#fff6c0',{emissive:'#ffe080',emissiveIntensity:2})),0,-0.05,0));
+  intLamp=new THREE.SpotLight(0xffe8b0,10,5,0.75,0.5,1); intLamp.position.set(0,-0.05,0); lampG.add(intLamp); lampG.add(intLamp.target); intLamp.target.position.set(0,-2,0); intLamp.castShadow=true;
+  intDet=addRig(DETECTIVE_H,intG,0.75,0.25,-1.3,'think','grumpy');
+  addRig(POLICE_H,intG,1.45,-0.55,-0.5,'idle','normal');
+}
+function buildJail(years){
+  jailG.clear(); clearExtra();
+  const fl=new THREE.Mesh(new THREE.PlaneGeometry(6,4),mat('#5a5a58',{roughness:1})); fl.rotation.x=-Math.PI/2; fl.receiveShadow=true; jailG.add(fl);
+  const wl=new THREE.Mesh(new THREE.PlaneGeometry(6,3),mat('#7a786f',{roughness:1})); wl.position.set(0,1.5,-1); jailG.add(wl);
+  for(let i=0;i<years;i++){ const m=cube(0.02,0.14,0.005,'#333'); m.position.set(0.6+(i%5)*0.05+(i%5===4?0:0),1.2-Math.floor(i/5)*0.2,-0.99); if(i%5===4){ m.rotation.z=1.1; m.position.x=0.7; } jailG.add(m); }
+  const win=new THREE.Mesh(new THREE.PlaneGeometry(0.4,0.3),mat('#a0c8e8',{emissive:'#6090b0',emissiveIntensity:0.4})); win.position.set(-0.6,1.9,-0.99); jailG.add(win);
+  for(let i=0;i<4;i++){ const b=cyl(0.01,0.01,0.3,mat('#333'),6); b.position.set(-0.75+i*0.1,1.9,-0.98); jailG.add(b); }
+  const bed=cube(0.9,0.25,0.45,'#8a8a90'); bed.position.set(-0.9,0.125,-0.6); jailG.add(bed); const pil=cube(0.25,0.07,0.35,'#eee'); pil.position.set(-1.25,0.28,-0.6); jailG.add(pil);
+  const H=Object.assign({},OPERATORS[SAVE.op||0][1],{top:'shirt',topC:'#e08a30',accC:'#e08a30',bottom:'pants',botC:'#e08a30',acc:[],hat:'none',shoes:'sandal'});
+  addRig(H,jailG,0,-0.2,0,'sad','cry');
+  for(let i=0;i<11;i++){ const b=cyl(0.025,0.025,2.4,mat('#444',{metalness:0.7,roughness:0.3}),10); b.position.set(-1.25+i*0.25,1.2,0.75); b.castShadow=true; jailG.add(b); }
+  for(const y of [0.1,2.3]){ const b=cube(2.6,0.06,0.06,mat('#444',{metalness:0.7,roughness:0.3})); b.position.set(0,y,0.75); jailG.add(b); }
+}
+
+/* 逮捕判定：実力行使・悪口のたびに */
+function policeCheck(r){
+  const add=Math.round((r.police||((r.compla||0)*0.5))*(S.items.mask?0.6:1)); if(!add) return false;
+  S.police=Math.min(100,S.police+add); K.result+=`　🚓通報度 +${add}`;
+  const chance=Math.max(0,S.police-40)/320+(r.id==="dokuzetsu"||r.id==="bomb"?0.03:0);
+  return Math.random()<chance;
+}
+let arrestedFrom=null;
+function startArrest(){
+  mode='arrest'; stopSpeech(); hideBubbles(); S.arrests=(S.arrests||0)+1; unlockAch('arrest'); K.state='arrest';
+  logPush('sys','🚨 ウーーー！ 警察が突入してきた！','bad'); renderCall(true); renderHUD();
+  siren(true); vib([300,100,300]); popText('🚓 警察だ！！','fire');
+  const p1=addRig(POLICE_H,gameG,2.6,0.25,-Math.PI/2,'walk'), p2=addRig(Object.assign({},POLICE_H,{hair:'bob',hairC:'#3a2a20'}),gameG,3.0,-0.15,-Math.PI/2,'walk');
+  if(clRig){ clRig.base='laugh'; clRig.baseExpr='happy'; clRig.tempUntil=0; }
+  setOp('sit_type','shock'); setTimeout(()=>{ setBubble('cl','ざまぁみろ！通報してやったわ！',3); speak('ざまぁみろ！通報してやったわ！',clVoice()); },300);
+  const car=emojiSprite('🚓',0.45); car.position.set(-3.2,1.2,-0.9); gameG.add(car);
+  anim(5.2,p=>{ const lt=p*5.2;
+    car.position.x=-3.2+Math.min(1,lt/1.2)*1.0;
+    if(lt<1.6){ const q=lt/1.6; p1.root.position.x=2.6-q*2.75; p2.root.position.x=3.0-q*2.85; }
+    else if(lt<2.8){ if(p1.base!=='point'){ p1.base='point'; p2.base='angry'; p2.baseExpr='angry'; p1.baseExpr='angry'; act(opRig,'surprise',1.3,'shock'); setBubble('op','えっ…ちょっ…！？',2); speak('警察だ！動くな！',[0.5,1.1]); popText('動くな！！','fire'); } }
+    else { if(p1.base!=='walk'){ p1.base='walk'; p2.base='walk'; opRig.base='walk'; opRig.baseExpr='cry'; opRig.tempUntil=0; p1.root.rotation.y=-Math.PI/2; p2.root.rotation.y=-Math.PI/2; opRig.root.rotation.y=-Math.PI/2-0.32; }
+      const q=(lt-2.8)/2.4; opRig.root.position.x=-q*2.6; p1.root.position.x=-0.15-q*2.6; p2.root.position.x=0.25-q*2.6; }
+  },()=>{ gameG.remove(car); siren(false); startInterrogation(); });
+}
+let I=null;
+function intLogHTML(){ return I.log.map(m=>{ if(m.who==='sys') return `<div class="sys ${m.kind||''}">${esc(m.text)}</div>`;
+  const d=m.who==='det'; return `<div class="msg ${d?'cl':'op'}"><div class="av">${d?'🕵️':'🎧'}</div><div class="mb"><div class="nm">${d?'鬼刑事 '+'権田':'あなた'}</div><div class="bb">${esc(m.text)}</div></div></div>`; }).join(''); }
+function startInterrogation(){
+  clearExtra(); if(opRig){ opRig.root.position.set(0,0,0); opRig.root.rotation.y=0; opRig.base='op_talk'; }
+  mode='interro'; showScene('int'); buildInt();
+  const tk=pick(Object.keys(DET_TYPES)); const prior=(S.arrests||1)-1;
+  I={type:tk,sus:Math.min(90,35+Math.round(S.police*0.3)+prior*8),mood:50,round:0,max:4,log:[],prior,lastV:K&&K.lastViolent?K.lastViolent:'あの電話対応'};
+  S.police=Math.max(0,S.police-40);
+  I.log.push({who:'sys',text:`🏢 ${['中央','港','北','湾岸'][Math.floor(Math.random()*4)]}警察署・取調室${prior?`（前科${prior}犯）`:''}`});
+  I.log.push({who:'det',text:DET_TYPES[tk].intro}); I.q=DET_Q[0];
+  I.log.push({who:'det',text:I.q}); speak(DET_TYPES[tk].intro+'。'+I.q,DET_TYPES[tk].v);
+  setDetBubble(DET_TYPES[tk].intro);
+  dealInt(); renderInt(); HUD.innerHTML='';
+}
+function setDetBubble(t){ SB.cl.full=t; SB.cl.n=0; SB.cl.until=T+6; SB.cl.el.style.display='block'; }
+function dealInt(){ I.hand=shuffle(INT_OPTS.slice()).slice(0,12); }
+function renderInt(){
+  HUD.innerHTML=`<div class="top"><span>🚔 取り調べ ${Math.min(I.round+1,I.max)}/${I.max}</span><span class="mt">🤨疑い${Math.round(I.sus)}${bar(I.sus,100,I.sus>65?'#e04848':I.sus>35?'#e6a23a':'#3ab06a')}</span><span class="mt">😠機嫌${Math.round(I.mood)}${bar(I.mood,100,'#8a6ad0')}</span></div>
+   <div class="hr"><div class="cn">🕵️ 鬼刑事 権田</div><div>判決の目安</div><div class="wk"><span class="tg" style="background:#3ab06a">〜34 釈放</span><span class="tg" style="background:#e6a23a">35〜64 罰金</span><span class="tg" style="background:#e04848">65〜 実刑</span></div></div>`;
+  UI.innerHTML=`<div class="logwrap"><div class="loghead"><span>🚔 取調室の会話</span><button class="mini" id="vtg">${voiceOn?'🔊 音声ON':'🔇 音声OFF'}</button></div><div class="log" id="log">${intLogHTML()}</div></div>
+   ${I.done?'':`<div class="chhead">▼ 刑事への返答を選ぶ（${I.hand.length}択）</div><div class="grid">${I.hand.map((o,i)=>`<button class="ch" data-q="${i}"><b>${o[1]}</b><small>${o[2]}</small></button>`).join('')}</div>`}`;
+  const lg=$('#log'); if(lg) lg.scrollTop=lg.scrollHeight;
+  UI.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>answerInt(+b.dataset.q));
+  const vt=$('#vtg'); if(vt) vt.onclick=()=>{ const on=toggleVoice(); vt.textContent=on?'🔊 音声ON':'🔇 音声OFF'; };
+}
+function answerInt(i){
+  if(I.done) return; const o=I.hand[i]; SFX.click(); stopSpeech();
+  let ds=o[3]+(o[5][I.type]||0), dm=o[4];
+  if(o[0]==='alibi') ds=Math.random()<0.45?-20:25;
+  if(o[0]==='lawyer'&&S.items.lawyer) ds-=15;
+  if(S.items.lawyer) ds-=3;
+  if(o[0]==='meditate') S.mental=Math.min(S.maxMental,S.mental+10);
+  if(o[0]==='katsudon'&&I.type==='ninjo'){ intG.userData.katsudon.visible=true; dm=15; }
+  if(I.type==='tanki') dm*=1.5;
+  I.mood=Math.max(0,Math.min(100,I.mood+dm));
+  if(I.mood<20) ds+=5; if(I.mood>70) ds-=5;
+  ds=Math.round(ds*rnd(0.85,1.15)); I.sus=Math.max(0,Math.min(100,I.sus+ds));
+  const kind=ds<=-6?'good':ds>=6?'bad':'mid';
+  I.log.push({who:'op',text:o[2]}); setBubble('op',o[2],2.5); speak(o[2],opVoice());
+  I.log.push({who:'sys',text:`疑い ${ds>=0?'+':''}${ds}・機嫌 ${dm>=0?'+':''}${Math.round(dm)}${o[0]==='meditate'?'・メンタル +10':''}`,kind});
+  const re=pick(DET_REACT[kind]); I.log.push({who:'det',text:re});
+  if(intDet){ intDet.base=kind==='bad'?(Math.random()<0.5?'yell':'angry'):kind==='good'?'calm':'think'; intDet.baseExpr=kind==='bad'?'angry':kind==='good'?'calm':'grumpy'; }
+  if(intOp){ intOp.base=kind==='bad'?'op_stress':kind==='good'?'op_bow':'op_talk'; intOp.baseExpr=kind==='bad'?'cry':'worried'; }
+  if(kind==='bad'){ SFX.slap(); shake=0.3; } else if(kind==='good') SFX.good();
+  I.round++;
+  if(I.round>=I.max){ I.done=true; renderInt(); speak(re,DET_TYPES[I.type].v); setTimeout(()=>setDetBubble(re),700); return setTimeout(verdict,2200); }
+  I.q=DET_Q[1+Math.floor(Math.random()*(DET_Q.length-1))]; if(I.round===I.max-1) I.q=DET_Q[DET_Q.length-1];
+  I.log.push({who:'det',text:I.q}); speak(re+'。'+I.q,DET_TYPES[I.type].v); setTimeout(()=>setDetBubble(re+' '+I.q),700);
+  dealInt(); renderInt();
+}
+function verdict(){
+  const strict=I.prior*8, s=I.sus;
+  I.log.push({who:'sys',text:`🕵️ 刑事のタイプ：${DET_TYPES[I.type].n}`});
+  let res, txt, extra='';
+  if(s<35-strict*0.5){ res='free'; txt='釈放（厳重注意）'; S.score=Math.max(0,S.score-100); extra='スコア -100'; unlockAch('free'); }
+  else if(s<65-strict){ res='fine'; const fine=Math.round(S.coins*0.5); S.coins-=fine; S.score=Math.max(0,S.score-300); S.mental=Math.max(1,S.mental-20); txt='罰金・執行猶予'; extra=`罰金 💰${fine}・スコア -300・メンタル -20`; }
+  else { res='jail'; txt='実刑判決'; }
+  if(res==='jail') return jail();
+  SFX.win(); popText(res==='free'?'釈放！':'執行猶予…',res==='free'?'win':'');
+  if(intDet){ intDet.base='point'; intDet.baseExpr='grumpy'; } if(intOp){ intOp.base=res==='free'?'op_win':'op_bow'; intOp.baseExpr=res==='free'?'happy':'worried'; }
+  speak(res==='free'?'今回だけは見逃してやる。二度と来るなよ':'罰金だ。次はないと思え',DET_TYPES[I.type].v);
+  UI.innerHTML=`<div class="card center"><div class="big ${res==='free'?'green':''}">⚖️ ${txt}</div><div class="bubble">🕵️「${res==='free'?'今回だけは見逃してやる。二度と来るなよ。':'罰金だ。次はないと思え。'}」</div>
+   <p>${extra}<br><small>刑事のタイプ：${DET_TYPES[I.type].n}・最終疑い度 ${Math.round(s)}</small></p><button class="btn" id="go">会社に戻る</button></div>`;
+  $('#go').onclick=()=>{ SFX.click(); clearExtra(); showScene('game'); hideBubbles(); S.dayLog.push({c:K.c,res:'arrest',sc:0}); S.callIdx++; if(S.callIdx>=CALLS_PER_DAY) dayEnd(); else beforeCall(); };
+}
+function jail(){
+  mode='jail'; finishRun(); unlockAch('jail'); stopSpeech(); hideBubbles();
+  const years=Math.max(1,Math.min(15,Math.round((I.sus-50)/5)+I.prior*2));
+  showScene('jail'); buildJail(years); SFX.fire(); vib([400,100,400]); popText(`懲役${years}年`,'fire');
+  speak(`判決、懲役${years}年。`,[0.4,0.8]);
+  UI.innerHTML=`<div class="card center"><div class="big red">⛓️ 判決：懲役${years}年</div><p>取り調べはうまくいかなかった…<br>あなたのオペレーター人生はここで終わった。</p>
+   <div class="bubble">🕵️「暴力と悪口はクレーム対応じゃない。塀の中で頭を冷やすんだな」</div>
+   <div class="score">${S.score}<small> pt</small></div><p>称号：<b>${rankOf(S.score)}</b>（前科${S.arrests}犯）<br>ベスト：${SAVE.best}</p>
+   <button class="btn" id="re">出所して再就職する</button><button class="btn sub" id="tt">タイトルへ</button></div>`;
+  $('#re').onclick=()=>{ SFX.click(); clearExtra(); showScene('game'); newGame(); }; $('#tt').onclick=()=>{ SFX.click(); clearExtra(); showScene('game'); title(); };
+}
+function updatePolice(){
+  if(sirenOn){ const a=Math.sin(T*12)>0; sirenR.intensity=a?6:0; sirenB.intensity=a?0:6; }
+  if(intLamp) intLamp.intensity=10+Math.sin(T*2)*0.6+(Math.random()<0.02?-6:0);
+}
+
+/* ---------- カメラ・ループ ---------- */
+function fitCamera(){
+  const a=camera.aspect, th=Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
+  const d=Math.max(1.75/(2*th),3.2/(2*th*a));
+  camera.position.set(0,1.15,d); camera.lookAt(0,0.72,0);
+}
+function resize(){ const w=stage.clientWidth,h=stage.clientHeight; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); if(mode!=='viewer') fitCamera(); }
+new ResizeObserver(resize).observe(stage);
+let T=0; const clock=new THREE.Clock();
+function loop(){
+  requestAnimationFrame(loop);
+  const dt=Math.min(clock.getDelta(),0.05); T+=dt;
+  const k=1-Math.exp(-dt*14);
+  if(viewerG.visible){ if(viewRig){ viewRig.expr=viewRig.baseExpr||'normal'; setMotion(viewRig,viewRig.base,T); animateHuman(viewRig,viewRig.base,T); applyRig(viewRig,k); } controls.update(); }
+  else {
+    moodClaimer();
+    if(opRig){ tick(opRig); applyRig(opRig,k); }
+    if(clRig&&clG.visible){ tick(clRig); applyRig(clRig,k);
+      if(K&&K.popIn){ const p=Math.min(1,(T-K.popIn)/0.35); clG.scale.setScalar(0.01+0.99*(1-Math.pow(1-p,3))*(1+0.12*Math.sin(p*Math.PI))); if(p>=1) K.popIn=0; }
+      updateFinish();
+    }
+    // 怒り演出
+    const ang=K&&(mode==='call'||mode==='end')&&clRig&&clG.visible&&K.state==='talk'?K.anger:(K&&K.state==='fire'?100:0);
+    if(ang>30&&clRig&&clG.visible){ angerMark.visible=true; const hp=headPos(clRig); angerMark.position.set(hp.x+0.2,hp.y+0.28,hp.z); const sc=(0.12+ang/100*0.22)*(1+Math.sin(T*10)*0.12); angerMark.scale.set(sc,sc,sc); } else angerMark.visible=false;
+    if(K&&clG.visible&&(mode==='call'||mode==='end')){ const tc=new THREE.Color(bdBase).lerp(new THREE.Color('#ff5a4a'),Math.max(0,ang-40)/100); bdMat.color.lerp(tc,0.1); redLight.intensity=THREE.MathUtils.lerp(redLight.intensity,ang>70?2.5:0,0.1); } else redLight.intensity*=0.9;
+    if(flames.visible) flames.children.forEach(f=>{ const s=0.8+Math.sin(T*18+f.userData.ph)*0.3; f.scale.set(s,1+Math.sin(T*13+f.userData.ph)*0.5,s); f.position.y=0.2+Math.sin(T*9+f.userData.ph)*0.05; });
+    if(gameG.userData.clockHand) gameG.userData.clockHand.rotation.z=-T*0.5;
+    lineSprite.position.y=1.8+Math.sin(T*3)*0.04; lineSprite.material.rotation=mode==='ring'?Math.sin(T*30)*0.3:0;
+    for(const r of extraRigs){ tick(r); applyRig(r,k); }
+    updatePolice(); updateAnims(); updateBubbles(dt);
+    fitCamera(); if(shake>0){ camera.position.x+=(Math.random()-0.5)*shake*0.15; camera.position.y+=(Math.random()-0.5)*shake*0.1; shake=Math.max(0,shake-dt*1.2); }
+  }
+  for(let i=fx.length-1;i>=0;i--){ const f=fx[i]; f.life-=dt; f.v.y-=dt*2.2; f.o.position.addScaledVector(f.v,dt); f.o.material.opacity=Math.min(1,f.life*2); if(f.life<=0){ scene.remove(f.o); f.o.material.map.dispose(); f.o.material.dispose(); fx.splice(i,1); } }
+  renderer.render(scene,camera);
+}
+resize(); title(); loop();
+
+</script>
+</body>
+</html>
